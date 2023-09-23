@@ -1,5 +1,6 @@
 'use strict';
 
+import consola from 'consola';
 import mineflayer from 'mineflayer';
 import pathfinder from 'mineflayer-pathfinder';
 
@@ -14,20 +15,7 @@ export class Bot {
    * @param {string} version The Minecraft version.
    */
   constructor(host, port, username, version) {
-    /**
-     * @type {mineflayer.Bot}
-     * @private
-     * @constant
-     */
-    this.bot_ = mineflayer.createBot({
-      'auth': 'offline',
-      'host': host,
-      'port': port,
-      'username': username,
-      'version': version,
-    });
-
-    this.bot_.loadPlugin(pathfinder.pathfinder);
+    this.createMineflayerBot_(host, port, username, version);
   }
 
   /**
@@ -36,5 +24,33 @@ export class Bot {
    */
   getMineflayerBot() {
     return this.bot_;
+  }
+
+  /**
+   * Creates a Mineflayer bot.
+   * @param {string} host The server host.
+   * @param {number} port The server port.
+   * @param {string} username The username.
+   * @param {string} version The Minecraft version.
+   * @private
+   */
+  createMineflayerBot_(host, port, username, version) {
+    this.bot_ = mineflayer.createBot({
+      auth: 'offline',
+      host: host,
+      port: port,
+      username: username,
+      version: version,
+    });
+
+    this.bot_.loadPlugin(pathfinder.pathfinder);
+
+    this.bot_.on('end', this.createMineflayerBot_.bind(this));
+    this.bot_.on('error', (error) => {
+      consola.error(`bot error: ${error.message}`);
+    });
+    this.bot_.on('login', () => {
+      consola.success('bot logged in');
+    });
   }
 }
