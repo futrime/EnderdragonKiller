@@ -11,10 +11,10 @@ try {
   const username = 'Alice';  // Temporary
 
   const bot = new Bot(
-      process.env.HOST,
-      process.env.PORT,
+      process.env.MCSERVER_HOST,
+      process.env.MCSERVER_PORT,
       username,
-      process.env.VERSION,
+      process.env.MCSERVER_VERSION,
   );
 
 } catch (error) {
@@ -22,14 +22,21 @@ try {
 }
 
 function initializeEnvironmentVariables() {
-  if (process.env.HOST === undefined) {
-    throw new Error('environment variable HOST is not defined');
+  if (process.env.GATEWAY_HOST === undefined) {
+    throw new Error('environment variable GATEWAY_HOST is not defined');
   }
 
-  if (process.env.VERSION === undefined) {
-    throw new Error('environment variable VERSION is not defined');
-  }
+  process.env.GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT) || 14514;
 
   process.env.LOG_LEVEL = process.env.LOG_LEVEL || '3';
-  process.env.PORT = process.env.PORT || 25565;
+
+  if (process.env.MCSERVER_HOST === undefined) {
+    throw new Error('environment variable MCSERVER_HOST is not defined');
+  }
+
+  process.env.MCSERVER_PORT = parseInt(process.env.MCSERVER_PORT) || 25565;
+
+  if (process.env.MCSERVER_VERSION === undefined) {
+    throw new Error('environment variable MCSERVER_VERSION is not defined');
+  }
 }
