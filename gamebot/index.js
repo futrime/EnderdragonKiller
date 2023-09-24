@@ -1,4 +1,5 @@
 'use strict';
+//@ts-check
 
 import consola from 'consola';
 import 'dotenv/config';
@@ -6,37 +7,27 @@ import process from 'process';
 import {Bot} from './lib/bot.js';
 
 try {
-  initializeEnvironmentVariables();
+  // Read environment variables.
+  const gateway_host = process.env.GATEWAY_HOST || 'localhost';
+  const gateway_port = parseInt(process.env.GATEWAY_PORT || '80');
+  const log_level = parseInt(process.env.LOG_LEVEL || '3');
+  const mcserver_host = process.env.MCSERVER_HOST || 'localhost';
+  const mcserver_port = parseInt(process.env.MCSERVER_PORT || '25565');
+  const mcserver_version = process.env.MCSERVER_VERSION || '1.20.1';
+
+  // Set up logging.
+  consola.level = log_level;
 
   const username = 'Alice';  // Temporary
 
   const bot = new Bot(
-      process.env.MCSERVER_HOST,
-      process.env.MCSERVER_PORT,
+      mcserver_host,
+      mcserver_port,
       username,
-      process.env.MCSERVER_VERSION,
+      mcserver_version,
   );
 
 } catch (error) {
   consola.error(`process exited with error: ${error.message}`);
-}
-
-function initializeEnvironmentVariables() {
-  if (process.env.GATEWAY_HOST === undefined) {
-    throw new Error('environment variable GATEWAY_HOST is not defined');
-  }
-
-  process.env.GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT) || 14514;
-
-  process.env.LOG_LEVEL = process.env.LOG_LEVEL || '3';
-
-  if (process.env.MCSERVER_HOST === undefined) {
-    throw new Error('environment variable MCSERVER_HOST is not defined');
-  }
-
-  process.env.MCSERVER_PORT = parseInt(process.env.MCSERVER_PORT) || 25565;
-
-  if (process.env.MCSERVER_VERSION === undefined) {
-    throw new Error('environment variable MCSERVER_VERSION is not defined');
-  }
+  process.exit(1);
 }
