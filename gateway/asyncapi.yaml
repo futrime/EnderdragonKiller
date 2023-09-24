@@ -1,0 +1,16 @@
+asyncapi: 2.6.0
+info:
+  title: EnderdragonKiller Gateway API
+  version: 0.0.0
+channels:
+  /gamebot:
+    publish:
+      message:
+        oneOf:
+          - $ref: '#/components/messages/GameBotReady'
+
+components:
+  messages:
+    GameBotReady:
+      payload:
+      
