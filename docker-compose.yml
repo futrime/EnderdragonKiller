@@ -1,0 +1,22 @@
+networks:
+  enderdragonkiller:
+
+services:
+  gateway:
+    build: ./gateway
+    networks:
+      - enderdragonkiller
+    ports:
+      - 80
+    restart: always
+
+  gamebot:
+    build: ./gamebot
+    deploy:
+      replicas: 90
+    environment:
+      GATEWAY_HOST: gateway
+      MCSERVER_HOST: ${MCSERVER_HOST}
+    networks:
+      - enderdragonkiller
+    restart: always
