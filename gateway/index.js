@@ -12,7 +12,7 @@ import {router as routerApiBots} from './routes/bots/index.js';
 
 try {
   // Read environment variables.
-  const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
+  const listen_port = parseInt(process.env.LISTEN_PORT || '80');
   const log_level = parseInt(process.env.LOG_LEVEL || '3');
   const faker_seed = parseInt(process.env.FAKER_SEED || '114514');
 

@@ -1,3 +1,4 @@
+//@ts-check
 'use strict';
 
 import consola from 'consola';
@@ -23,6 +24,9 @@ export class Bot {
    * @returns {mineflayer.Bot} The Mineflayer bot.
    */
   getMineflayerBot() {
+    if (this.bot_ === undefined) {
+      throw new Error('bot is undefined');
+    }
     return this.bot_;
   }
 

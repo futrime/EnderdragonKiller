@@ -1,3 +1,4 @@
+//@ts-check
 'use strict';
 
 /**
@@ -42,6 +43,8 @@ export class Vec3 {
    * @returns {number} The distance.
    */
   getDistanceTo(vec) {
-    return Math.sqrt(this.distanceToSquared(vec));
+    return Math.sqrt(
+        Math.pow(this.x - vec.x, 2) + Math.pow(this.y - vec.y, 2) +
+        Math.pow(this.z - vec.z, 2));
   }
 }
