@@ -7,27 +7,42 @@ import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
 import process from 'process';
-import GameBotRouter from './routes/gamebot.js';
+import {router as routerApiBots} from './routes/bots/index.js';
 
 try {
   // Read environment variables.
-  const listen_port = parseInt(process.env.LISTEN_PORT || '80');
+  const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
   const log_level = parseInt(process.env.LOG_LEVEL || '3');
 
   // Set up logging.
   consola.level = log_level
 
+  // Set up shared data.
+  /**
+   * @type {import('./lib/bot').Bot[]}
+   */
+  const bots = [];
+
   // Set up express.
   const app = express();
+
+  app.locals.bots = bots;
+
   app.use(morgan('tiny'));
   app.use(cors());
-  app.use('/gamebot', GameBotRouter);
+
+  app.use('/api/bots', routerApiBots);
+
   app.use((_, res) => {
-    res.status(403).send({
-      code: 403,
-      message: 'Forbidden',
+    res.status(404).send({
+      apiVersion: '0.1.0',
+      error: {
+        code: 404,
+        message: 'The requested resource was not found.',
+      }
     });
   });
+
   app.listen(listen_port, () => {
     consola.info(`listening on port ${listen_port}`);
   });
