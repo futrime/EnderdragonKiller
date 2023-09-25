@@ -9,7 +9,7 @@ import {Bot} from './lib/bot.js';
 try {
   // Read environment variables.
   const gateway_host = process.env.GATEWAY_HOST || 'localhost';
-  const gateway_port = parseInt(process.env.GATEWAY_PORT || '80');
+  const gateway_port = parseInt(process.env.GATEWAY_PORT || '8080');
   const log_level = parseInt(process.env.LOG_LEVEL || '3');
   const mcserver_host = process.env.MCSERVER_HOST || 'localhost';
   const mcserver_port = parseInt(process.env.MCSERVER_PORT || '25565');
