@@ -35,6 +35,7 @@ try {
 
   app.use(morgan('tiny'));
   app.use(cors());
+  app.use(express.json());
 
   app.use('/api/bots', routerApiBots);
 
@@ -48,7 +49,7 @@ try {
     });
   });
 
-  app.listen(listen_port, () => {
+  app.listen(listen_port, '0.0.0.0', () => {
     consola.info(`listening on port ${listen_port}`);
   });
 
