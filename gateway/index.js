@@ -1,6 +1,7 @@
 //@ts-check
 'use strict';
 
+import {faker} from '@faker-js/faker';
 import consola from 'consola';
 import cors from 'cors';
 import 'dotenv/config';
@@ -13,9 +14,13 @@ try {
   // Read environment variables.
   const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
   const log_level = parseInt(process.env.LOG_LEVEL || '3');
+  const faker_seed = parseInt(process.env.FAKER_SEED || '114514');
 
   // Set up logging.
   consola.level = log_level
+
+  // Setup Faker.
+  faker.seed(faker_seed);
 
   // Set up shared data.
   /**
