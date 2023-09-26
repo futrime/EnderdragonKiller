@@ -13,7 +13,7 @@ import {router as routerApiState} from './routes/state/index.js';
 try {
   // Read environment variables.
   const gateway_host = process.env.GATEWAY_HOST || '127.0.0.1';
-  const gateway_port = parseInt(process.env.GATEWAY_PORT || '80');
+  const gateway_port = parseInt(process.env.GATEWAY_PORT || '8080');
   const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
   const log_level = parseInt(process.env.LOG_LEVEL || '3');
   const mcserver_host = process.env.MCSERVER_HOST || '127.0.0.1';
@@ -24,7 +24,7 @@ try {
   consola.level = log_level;
 
   // Register the bot on the gateway.
-  const username = await registerBot(
+  const {username} = await registerBot(
       listen_port,
       gateway_host,
       gateway_port,
@@ -73,27 +73,32 @@ try {
  * @param {number} listen_port The port of the gamebot.
  * @param {string} gateway_host The host of the gateway.
  * @param {number} gateway_port The port of the gateway.
- * @returns {Promise<string>} The username of the bot.
+ * @returns {Promise<{username: string}>} The username of the bot.
  */
 async function registerBot(listen_port, gateway_host, gateway_port) {
-  consola.debug(`fetch('http://${gateway_host}:${gateway_port}/api/bots')`);
-  const res = await fetch(
-      `http://${gateway_host}:${gateway_port}/api/bots`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apiVersion: '0.1.0',
-          data: {
-            port: listen_port,
+  try {
+    consola.debug(`fetch('http://${gateway_host}:${gateway_port}/api/bots')`);
+    const res = await fetch(
+        `http://${gateway_host}:${gateway_port}/api/bots`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      },
-  );
+          body: JSON.stringify({
+            apiVersion: '0.1.0',
+            data: {
+              port: listen_port,
+            },
+          }),
+        },
+    );
 
-  const json = await res.json();
+    const json = await res.json();
 
-  return json.data.username;
+    return {username: json.data.username};
+
+  } catch (error) {
+    throw new Error(`failed to register bot: ${error.message}`);
+  }
 }

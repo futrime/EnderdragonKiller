@@ -146,7 +146,8 @@ router.route('/:username/*').all(async (req, res) => {
       const response = await fetch(url, {
         headers: requestHeaders,
         method: req.method,
-        body: req.body,
+        body: (req.method === 'GET' || req.method === 'HEAD') ? undefined :
+                                                                req.body,
       });
 
       res.status(response.status);
