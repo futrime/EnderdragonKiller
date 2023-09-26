@@ -41,7 +41,7 @@ try {
 
   app.use((_, res) => {
     res.status(404).send({
-      apiVersion: '0.1.0',
+      apiVersion: '0.0.0',
       error: {
         code: 404,
         message: 'The requested resource was not found.',

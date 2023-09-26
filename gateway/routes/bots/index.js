@@ -5,6 +5,7 @@ import consola from 'consola';
 import express from 'express';
 import {faker} from '@faker-js/faker';
 import {Bot} from '../../lib/bot.js';
+import path from 'path';
 
 export const router = express.Router();
 
@@ -16,7 +17,7 @@ router.route('/').get(async (req, res) => {
     const bots = req.app.locals.bots;
 
     return res.status(200).send({
-      apiVersion: '0.1.0',
+      apiVersion: '0.0.0',
       data: {
         items: bots.map((/** @type {Bot} */ bot) => {
           return {
@@ -29,7 +30,7 @@ router.route('/').get(async (req, res) => {
   } catch (error) {
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
-      apiVersion: '0.1.0',
+      apiVersion: '0.0.0',
       error: {
         code: 500,
         message: `Internal server error occured: ${error.message}`,
@@ -52,7 +53,7 @@ router.route('/').post(async (req, res) => {
     for (const bot of bots) {
       if (bot.getIp() === ip) {
         return res.status(409).send({
-          apiVersion: '0.1.0',
+          apiVersion: '0.0.0',
           data: {
             username: bot.getUsername(),
           },
@@ -81,14 +82,11 @@ router.route('/').post(async (req, res) => {
     return res.status(201)
         .set(
             'Location',
-            new URL(
-                `/api/bots/${bot.getUsername()}`,
-                req.protocol + '://' + req.get('host'),
-                )
-                .href,
+            `${req.protocol}://${req.get('host')}/api/bots/${
+                bot.getUsername()}`,
             )
         .send({
-          apiVersion: '0.1.0',
+          apiVersion: '0.0.0',
           data: {
             username: bot.getUsername(),
           },
@@ -97,7 +95,7 @@ router.route('/').post(async (req, res) => {
   } catch (error) {
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
-      apiVersion: '0.1.0',
+      apiVersion: '0.0.0',
       error: {
         code: 500,
         message: `Internal server error occured: ${error.message}`,
@@ -123,7 +121,7 @@ router.route('/:username/*').all(async (req, res) => {
     if (bot === undefined) {
       res.status(404);
       res.send({
-        apiVersion: '0.1.0',
+        apiVersion: '0.0.0',
         error: {
           code: 404,
           message: `Bot with username ${req.params.username} not found.`,
@@ -139,9 +137,8 @@ router.route('/:username/*').all(async (req, res) => {
         requestHeaders.set(key, value?.toString() ?? '');
       }
 
-      const url =
-          new URL(req.params[0], `http://${bot.getIp()}:${bot.getPort()}/api`)
-              .href;
+      const url = path.join(
+          `http://${bot.getIp()}:${bot.getPort()}/api`, req.params[0]);
 
       const response = await fetch(url, {
         headers: requestHeaders,
@@ -159,22 +156,30 @@ router.route('/:username/*').all(async (req, res) => {
     } catch (error) {
       res.status(502);
       res.send({
-        apiVersion: '0.1.0',
+        apiVersion: '0.0.0',
         error: {
           code: 502,
-          message:
-              `Error occured while communicating with bot: ${error.message}`,
+          message: ` Error occured while communicating with bot: $ {
+        error.message
+      }
+      `,
         },
       });
     }
 
   } catch (error) {
-    consola.error(`Error: ${error.message}`);
+    consola.error(` Error: $ {
+        error.message
+      }
+      `);
     return res.status(500).send({
-      apiVersion: '0.1.0',
+      apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: `Internal server error occured: ${error.message}`,
+        message: ` Internal server error occured: $ {
+        error.message
+      }
+    `,
       },
     });
   }

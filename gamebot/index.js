@@ -51,7 +51,7 @@ try {
 
   app.use((_, res) => {
     res.status(404).send({
-      apiVersion: '0.1.0',
+      apiVersion: '0.0.0',
       error: {
         code: 404,
         message: 'The requested resource was not found.',
@@ -77,6 +77,8 @@ try {
  */
 async function registerBot(listen_port, gateway_host, gateway_port) {
   try {
+    consola.log('registering bot...');
+
     consola.debug(`fetch('http://${gateway_host}:${gateway_port}/api/bots')`);
     const res = await fetch(
         `http://${gateway_host}:${gateway_port}/api/bots`,
@@ -86,7 +88,7 @@ async function registerBot(listen_port, gateway_host, gateway_port) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            apiVersion: '0.1.0',
+            apiVersion: '0.0.0',
             data: {
               port: listen_port,
             },
@@ -95,8 +97,13 @@ async function registerBot(listen_port, gateway_host, gateway_port) {
     );
 
     const json = await res.json();
+    const result = {
+      username: json.data.username,
+    };
 
-    return {username: json.data.username};
+    consola.log(`registered bot as ${result.username}`);
+
+    return result;
 
   } catch (error) {
     throw new Error(`failed to register bot: ${error.message}`);
