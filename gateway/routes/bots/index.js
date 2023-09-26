@@ -3,7 +3,6 @@
 
 import consola from 'consola';
 import express from 'express';
-import httpErrors from 'http-errors';
 import {faker} from '@faker-js/faker';
 import {Bot} from '../../lib/bot.js';
 
@@ -12,7 +11,7 @@ export const router = express.Router();
 router.route('/').get(async (req, res) => {
   try {
     /**
-     * @type {import('../../lib/bot.js').Bot[]}
+     * @type {Bot[]}
      */
     const bots = req.app.locals.bots;
 
@@ -28,25 +27,14 @@ router.route('/').get(async (req, res) => {
     });
 
   } catch (error) {
-    if (httpErrors.isHttpError(error)) {
-      return res.status(error.statusCode).send({
-        apiVersion: '0.1.0',
-        error: {
-          code: error.statusCode,
-          message: error.message,
-        },
-      });
-
-    } else {
-      consola.error(`Error: ${error.message}`);
-      return res.status(500).send({
-        apiVersion: '0.1.0',
-        error: {
-          code: 500,
-          message: `Internal server error occured: ${error.message}`,
-        },
-      });
-    }
+    consola.error(`Error: ${error.message}`);
+    return res.status(500).send({
+      apiVersion: '0.1.0',
+      error: {
+        code: 500,
+        message: `Internal server error occured: ${error.message}`,
+      },
+    });
   }
 });
 
@@ -60,14 +48,21 @@ router.route('/').post(async (req, res) => {
     /**
      * @type {string}
      */
-    let ip = req.ip;
-    bots.forEach((bot) => {
+    const ip = req.ip;
+    for (const bot of bots) {
       if (bot.getIp() === ip) {
-        throw new httpErrors.Conflict(
-            `A bot with the same IP address (${ip}) already exists.`,
-        );
+        return res.status(409).send({
+          apiVersion: '0.1.0',
+          data: {
+            username: bot.getUsername(),
+          },
+          error: {
+            code: 409,
+            message: `A bot with the same IP address (${ip}) already exists.`,
+          },
+        });
       }
-    });
+    }
 
     // TODO: Validate with JSON schema.
     /**
@@ -100,25 +95,14 @@ router.route('/').post(async (req, res) => {
         });
 
   } catch (error) {
-    if (httpErrors.isHttpError(error)) {
-      return res.status(error.statusCode).send({
-        apiVersion: '0.1.0',
-        error: {
-          code: error.statusCode,
-          message: error.message,
-        },
-      });
-
-    } else {
-      consola.error(`Error: ${error.message}`);
-      return res.status(500).send({
-        apiVersion: '0.1.0',
-        error: {
-          code: 500,
-          message: `Internal server error occured: ${error.message}`,
-        },
-      });
-    }
+    consola.error(`Error: ${error.message}`);
+    return res.status(500).send({
+      apiVersion: '0.1.0',
+      error: {
+        code: 500,
+        message: `Internal server error occured: ${error.message}`,
+      },
+    });
   }
 });
 
@@ -137,9 +121,15 @@ router.route('/:username/*').all(async (req, res) => {
     });
 
     if (bot === undefined) {
-      throw new httpErrors.NotFound(
-          `Bot with username ${req.params.username} not found.`,
-      );
+      res.status(404);
+      res.send({
+        apiVersion: '0.1.0',
+        error: {
+          code: 404,
+          message: `Bot with username ${req.params.username} not found.`,
+        },
+      });
+      return;
     }
 
     // Act as a reverse proxy.
@@ -166,30 +156,25 @@ router.route('/:username/*').all(async (req, res) => {
       res.send(await response.json());
 
     } catch (error) {
-      throw new httpErrors.BadGateway(
-          `Error occured while communicating with bot: ${error.message}`,
-      );
+      res.status(502);
+      res.send({
+        apiVersion: '0.1.0',
+        error: {
+          code: 502,
+          message:
+              `Error occured while communicating with bot: ${error.message}`,
+        },
+      });
     }
 
   } catch (error) {
-    if (httpErrors.isHttpError(error)) {
-      return res.status(error.statusCode).send({
-        apiVersion: '0.1.0',
-        error: {
-          code: error.statusCode,
-          message: error.message,
-        },
-      });
-
-    } else {
-      consola.error(`Error: ${error.message}`);
-      return res.status(500).send({
-        apiVersion: '0.1.0',
-        error: {
-          code: 500,
-          message: `Internal server error occured: ${error.message}`,
-        },
-      });
-    }
+    consola.error(`Error: ${error.message}`);
+    return res.status(500).send({
+      apiVersion: '0.1.0',
+      error: {
+        code: 500,
+        message: `Internal server error occured: ${error.message}`,
+      },
+    });
   }
 });
