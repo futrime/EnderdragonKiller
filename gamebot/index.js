@@ -2,15 +2,19 @@
 'use strict';
 
 import consola from 'consola';
+import cors from 'cors';
 import 'dotenv/config';
+import express from 'express';
+import morgan from 'morgan';
 import process from 'process';
 import {Bot} from './lib/bot.js';
+import {router as routerApiState} from './routes/state/index.js';
 
 try {
   // Read environment variables.
-  const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
   const gateway_host = process.env.GATEWAY_HOST || '127.0.0.1';
   const gateway_port = parseInt(process.env.GATEWAY_PORT || '80');
+  const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
   const log_level = parseInt(process.env.LOG_LEVEL || '3');
   const mcserver_host = process.env.MCSERVER_HOST || '127.0.0.1';
   const mcserver_port = parseInt(process.env.MCSERVER_PORT || '25565');
@@ -33,6 +37,31 @@ try {
       username,
       mcserver_version,
   );
+
+  // Set up express.
+  const app = express();
+
+  app.locals.bot = bot;
+
+  app.use(morgan('tiny'));
+  app.use(cors());
+  app.use(express.json());
+
+  app.use('/api/state', routerApiState);
+
+  app.use((_, res) => {
+    res.status(404).send({
+      apiVersion: '0.1.0',
+      error: {
+        code: 404,
+        message: 'The requested resource was not found.',
+      },
+    });
+  });
+
+  app.listen(listen_port, '0.0.0.0', () => {
+    consola.info(`listening on port ${listen_port}`);
+  });
 
 } catch (error) {
   consola.error(`process exited with error: ${error.message}`);

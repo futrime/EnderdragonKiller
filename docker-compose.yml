@@ -13,10 +13,12 @@ services:
   gamebot:
     build: ./gamebot
     deploy:
-      replicas: 90
+      replicas: 10
     environment:
       GATEWAY_HOST: gateway
       MCSERVER_HOST: ${MCSERVER_HOST}
+      MCSERVER_PORT: ${MCSERVER_PORT}
+      MCSERVER_VERSION: ${MCSERVER_VERSION}
     networks:
       - enderdragonkiller
     restart: always
