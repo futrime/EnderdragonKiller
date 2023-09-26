@@ -3,12 +3,10 @@
 
 import consola from 'consola';
 import express from 'express';
-import registry from 'prismarine-registry';
-import biome from 'prismarine-biome';
 
 export const router = express.Router();
 
-router.route('/').get(async (req, res) => {
+router.route('/').get((req, res) => {
   try {
     /**
      * @type {import('../../lib/bot.js').Bot}
@@ -19,7 +17,7 @@ router.route('/').get(async (req, res) => {
     return res.status(200).send({
       apiVersion: '0.0.0',
       data: {
-        bot: await botToJson(mineflayerBot),
+        bot: botToJson(mineflayerBot),
       },
     });
 
@@ -65,9 +63,9 @@ function blockToJson(block) {
 
 /**
  * @param {import('mineflayer').Bot} bot The bot to convert to JSON
- * @returns {Promise<object>} The JSON representation of the bot
+ * @returns {object} The JSON representation of the bot
  */
-async function botToJson(bot) {
+function botToJson(bot) {
   return {
     username: bot.username,
     version: bot.version,
@@ -88,10 +86,29 @@ async function botToJson(bot) {
     oxygenLevel: bot.oxygenLevel,
     time: timeToJson(bot.time),
     quickBarSlot: bot.quickBarSlot,
-    targetDigBlock:
-        (bot.targetDigBlock !== null) ? blockToJson(bot.targetDigBlock) : null,
     isSleeping: bot.isSleeping,
-    world: await worldToJson(bot.world, bot.entity.position, bot.version),
+
+    blocksNearby: (() => {
+      const position = bot.entity.position;
+      const blockMap = new Map();
+
+      for (let x = -8; x <= 8; x++) {
+        for (let y = -8; y <= 8; y++) {
+          for (let z = -8; z <= 8; z++) {
+            const block = bot.blockAt(position.offset(x, y, z));
+
+            if (block !== null) {
+              blockMap.set(block.name, {
+                name: block.name,
+                displayName: block.displayName,
+              });
+            }
+          }
+        }
+      }
+
+      return Array.from(blockMap.values());
+    })(),
   };
 }
 
@@ -170,22 +187,5 @@ function timeToJson(time) {
     isDay: time.isDay,
     moonPhase: time.moonPhase,
     age: time.age,
-  };
-}
-
-/**
- * @param {import('prismarine-world').world.World} world The world to convert to
- *     JSON
- * @param {import('vec3').Vec3} playerPosition The position of the player
- * @param {string} version The version of Minecraft
- * @returns {Promise<object>} The JSON representation of the world
- */
-async function worldToJson(world, playerPosition, version) {
-  const Biome = biome(registry(version));
-
-  const biomeId = await world.getBiome(playerPosition);
-
-  return {
-    biome: biomeToJson(new Biome(biomeId)),
   };
 }
