@@ -33,10 +33,20 @@ export class Bot {
      */
     this.mcdata_ = this.createMinecraftData_(version);
     /**
+     * @type {Action?}
+     */
+    this.evalCurrentAction_ = null;
+    /**
      * @type {Object[]}
      * @private
      */
     this.evalResults = [];
+    /**
+     * @type {string}
+     * @enum {'ready'|'running'|'error'}
+     * @private
+     */
+    this.evalState_ = 'ready';
   }
 
   /**
@@ -44,8 +54,25 @@ export class Bot {
    * @param {import('./programs.js').IProgram} program The program to evaluate.
    */
   async eval(program) {
+    if (this.evalState_ === 'running') {
+      consola.error('the bot is already running a program');
+      return;
+    }
+
+    this.evalCurrentAction_ = null;
     this.evalResults = [];
-    await this.evalProgram_(this, program);
+    this.evalState_ = 'running';
+
+    try {
+      await this.evalProgram_(this, program);
+
+    } catch (error) {
+      consola.error(`error while evaluating the program: ${error.message}`);
+    }
+
+    if (this.evalState_ === 'running') {
+      this.evalState_ = 'ready';
+    }
   }
 
   /**
@@ -56,6 +83,31 @@ export class Bot {
   getCollectBlock() {
     // @ts-expect-error
     return this.bot_.collectBlock;
+  }
+
+  /**
+   * Gets the current evaluation action.
+   * @returns {Action?} The current evaluation action.
+   */
+  getEvalCurrentAction() {
+    return this.evalCurrentAction_;
+  }
+
+  /**
+   * Gets the current evaluation results.
+   * @returns {{type: string, message: string}[]} The current evaluation
+   *     results.
+   */
+  getEvalResults() {
+    return [...this.evalResults];
+  }
+
+  /**
+   * Gets the current evaluation state.
+   * @returns {string} The current evaluation state.
+   */
+  getEvalState() {
+    return this.evalState_;
   }
 
   /**
@@ -143,9 +195,11 @@ export class Bot {
    */
   async evalProgram_(bot, program) {
     if (program instanceof Action) {
-      this.evalActionProgram_(bot, program);
+      await this.evalActionProgram_(bot, program);
+
     } else if (program instanceof Sequence) {
-      this.evalSequenceProgram_(bot, program);
+      await this.evalSequenceProgram_(bot, program);
+
     } else {
       throw new Error(`unknown program type: ${program.getType()}`);
     }
@@ -157,9 +211,18 @@ export class Bot {
    * @param {Action} program
    */
   async evalActionProgram_(bot, program) {
+    if (this.evalState_ !== 'running') {
+      return;
+    }
+
+    this.evalCurrentAction_ = program;
+
     const actionName = program.getName();
     const paramMap = program.getParamMap();
 
+    /**
+     * @type {{type: string, message?: string | undefined}}
+     */
     let result;
 
     switch (actionName) {
@@ -204,13 +267,17 @@ export class Bot {
         throw new Error(`unknown action name: ${actionName}`);
     }
 
+    this.evalCurrentAction_ = null;
     this.evalResults.push({
       action: {
         name: actionName,
         params: paramMap,
       },
       result: result,
-    })
+    });
+    if (result.type === 'error') {
+      this.evalState_ = 'error';
+    }
   }
 
   /**

@@ -16,7 +16,7 @@ const Block = blockModule.Block;
  * @param {import('./bot.js').Bot} bot The bot.
  * @param {string} name The block name.
  * @param {number | undefined} count The block count.
- * @returns {Promise<{type: string, message?: string,}>} The result.
+ * @returns {Promise<{type: string, message: string,}>} The result.
  */
 export async function collectBlock(bot, name, count) {
   if (count === undefined) {
@@ -75,7 +75,7 @@ export async function collectBlock(bot, name, count) {
  * @param {number | undefined} count The item count.
  * @param {boolean | undefined} useCraftingTable Whether to use a crafting
  *     table.
- * @returns {Promise<{type: string, message?: string,}>} The result.
+ * @returns {Promise<{type: string, message: string,}>} The result.
  */
 export async function craftItem(bot, name, count, useCraftingTable) {
   if (count === undefined) {
@@ -155,7 +155,7 @@ export async function craftItem(bot, name, count, useCraftingTable) {
  * @param {import('vec3').Vec3} maxReplacement The max replacement.
  * @param {boolean | undefined} ignoreY Whether to ignore Y axis.
  * @param {number | undefined} timeout The timeout in seconds.
- * @returns {Promise<{type: string, message?: string,}>} The result.
+ * @returns {Promise<{type: string, message: string,}>} The result.
  */
 export async function explore(bot, maxReplacement, ignoreY, timeout) {
   if (ignoreY === undefined) {
@@ -176,22 +176,37 @@ export async function explore(bot, maxReplacement, ignoreY, timeout) {
     const dz = Math.round(maxReplacement.z * Math.random());
 
     if (ignoreY === true) {
-      await pathfinder.goto(
-          new GoalNearXZ(
-              currentPosition.x + dx,
-              currentPosition.z + dz,
-              3 /* range */,
-              ),
-      );
+      try {
+        await pathfinder.goto(
+            new GoalNearXZ(
+                currentPosition.x + dx,
+                currentPosition.z + dz,
+                3 /* range */,
+                ),
+        );
+      } catch (error) {
+        return {
+          type: 'error',
+          message: `failed to explore the world: ${error}`,
+        };
+      }
+
     } else {
-      await pathfinder.goto(
-          new GoalNear(
-              currentPosition.x + dx,
-              currentPosition.y + dy,
-              currentPosition.z + dz,
-              3 /* range */,
-              ),
-      );
+      try {
+        await pathfinder.goto(
+            new GoalNear(
+                currentPosition.x + dx,
+                currentPosition.y + dy,
+                currentPosition.z + dz,
+                3 /* range */,
+                ),
+        );
+      } catch (error) {
+        return {
+          type: 'error',
+          message: `failed to explore the world: ${error}`,
+        };
+      }
     }
   }
 
@@ -205,7 +220,7 @@ export async function explore(bot, maxReplacement, ignoreY, timeout) {
  * Kills a specific entity.
  * @param {import('./bot.js').Bot} bot The bot.
  * @param {number} id The ID of the entity.
- * @returns {Promise<{type: string, message?: string,}>} The result.
+ * @returns {Promise<{type: string, message: string,}>} The result.
  */
 export async function killEntity(bot, id) {
   const mineflayerBot = bot.getMineflayerBot();

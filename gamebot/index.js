@@ -8,7 +8,7 @@ import express from 'express';
 import morgan from 'morgan';
 import process from 'process';
 import {Bot} from './lib/bot.js';
-import {router as routerApiState} from './routes/state/index.js';
+import {router as routerApiStatus} from './routes/status/index.js';
 import {router as routerApiProgram} from './routes/program/index.js';
 
 try {
@@ -49,7 +49,7 @@ try {
   app.use(express.json());
 
   app.use('/api/program', routerApiProgram)
-  app.use('/api/state', routerApiState);
+  app.use('/api/status', routerApiStatus);
 
   app.use((_, res) => {
     res.status(404).send({

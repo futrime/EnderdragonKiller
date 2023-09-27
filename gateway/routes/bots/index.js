@@ -159,9 +159,8 @@ router.route('/:username/*').all(async (req, res) => {
         apiVersion: '0.0.0',
         error: {
           code: 502,
-          message: ` Error occured while communicating with bot: $ {
-        error.message
-      }
+          message:
+              ` Error occured while communicating with bot: ${error.message}
       `,
         },
       });
