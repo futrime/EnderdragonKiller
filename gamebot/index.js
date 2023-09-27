@@ -9,6 +9,7 @@ import morgan from 'morgan';
 import process from 'process';
 import {Bot} from './lib/bot.js';
 import {router as routerApiState} from './routes/state/index.js';
+import {router as routerApiProgram} from './routes/program/index.js';
 
 try {
   // Read environment variables.
@@ -47,6 +48,7 @@ try {
   app.use(cors());
   app.use(express.json());
 
+  app.use('/api/program', routerApiProgram)
   app.use('/api/state', routerApiState);
 
   app.use((_, res) => {

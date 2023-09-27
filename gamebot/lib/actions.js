@@ -4,20 +4,25 @@
 // TODO: interrupt actions on demand.
 
 import pathfinderModule from 'mineflayer-pathfinder';
-import {Block} from 'prismarine-block';
+import blockModule from 'prismarine-block';
 
 const GoalLookAtBlock = pathfinderModule.goals.GoalLookAtBlock;
 const GoalNear = pathfinderModule.goals.GoalNear;
 const GoalNearXZ = pathfinderModule.goals.GoalNearXZ;
+const Block = blockModule.Block;
 
 /**
  * Collects blocks.
  * @param {import('./bot.js').Bot} bot The bot.
  * @param {string} name The block name.
- * @param {number} count The block count.
+ * @param {number | undefined} count The block count.
  * @returns {Promise<{type: string, message?: string,}>} The result.
  */
-export async function collectBlock(bot, name, count = 1) {
+export async function collectBlock(bot, name, count) {
+  if (count === undefined) {
+    count = 1;
+  }
+
   const mcdata = bot.getMcdata();
   const mineflayerBot = bot.getMineflayerBot();
 
@@ -67,12 +72,19 @@ export async function collectBlock(bot, name, count = 1) {
  * Crafts items.
  * @param {import('./bot.js').Bot} bot The bot.
  * @param {string} name The item name.
- * @param {number} count The item count.
- * @param {boolean} useCraftingTable Whether to use a crafting table.
+ * @param {number | undefined} count The item count.
+ * @param {boolean | undefined} useCraftingTable Whether to use a crafting
+ *     table.
  * @returns {Promise<{type: string, message?: string,}>} The result.
  */
-export async function craftItem(
-    bot, name, count = 1, useCraftingTable = false) {
+export async function craftItem(bot, name, count, useCraftingTable) {
+  if (count === undefined) {
+    count = 1;
+  }
+  if (useCraftingTable === undefined) {
+    useCraftingTable = true;
+  }
+
   const mcdata = bot.getMcdata();
   const mineflayerBot = bot.getMineflayerBot();
   const pathfinder = bot.getPathfinder();
@@ -141,12 +153,18 @@ export async function craftItem(
  * Explores the world.
  * @param {import('./bot.js').Bot} bot The bot.
  * @param {import('vec3').Vec3} maxReplacement The max replacement.
- * @param {boolean} ignoreY Whether to ignore Y axis.
- * @param {number} timeout The timeout in seconds.
+ * @param {boolean | undefined} ignoreY Whether to ignore Y axis.
+ * @param {number | undefined} timeout The timeout in seconds.
  * @returns {Promise<{type: string, message?: string,}>} The result.
  */
-export async function explore(
-    bot, maxReplacement, ignoreY = false, timeout = 60) {
+export async function explore(bot, maxReplacement, ignoreY, timeout) {
+  if (ignoreY === undefined) {
+    ignoreY = false;
+  }
+  if (timeout === undefined) {
+    timeout = 60;
+  }
+
   const mineflayerBot = bot.getMineflayerBot();
   const pathfinder = bot.getPathfinder();
 
