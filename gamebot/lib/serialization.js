@@ -106,6 +106,7 @@ export function effectToJson(effect) {
  */
 export function entityToJson(entity) {
   return {
+    id: entity.id,
     displayName: entity.displayName,
     name: entity.name,
     position: entity.position,

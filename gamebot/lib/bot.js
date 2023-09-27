@@ -6,6 +6,7 @@ import mineflayer from 'mineflayer';
 import pathfinder from 'mineflayer-pathfinder';
 import collectblock from 'mineflayer-collectblock';
 import minecraftData from 'minecraft-data';
+import pvp from 'mineflayer-pvp';
 
 /**
  * Represents a bot that can play Minecraft.
@@ -32,11 +33,11 @@ export class Bot {
 
   /**
    * Gets the collect block object.
-   * @returns {import('mineflayer-collectblock').CollectBlock} The collect block
+   * @returns {collectblock.CollectBlock} The collect block
    *     object.
    */
   getCollectBlock() {
-    // @ts-ignore
+    // @ts-expect-error
     return this.bot_.collectBlock;
   }
 
@@ -58,11 +59,19 @@ export class Bot {
 
   /**
    * Gets the pathfinder object.
-   * @returns {import('mineflayer-pathfinder').Pathfinder} The pathfinder
+   * @returns {pathfinder.Pathfinder} The pathfinder
    *    object.
    */
   getPathfinder() {
     return this.bot_.pathfinder;
+  }
+
+  /**
+   * Gets the PvP object.
+   * @returns {import('mineflayer-pvp/lib/PVP').PVP} The PvP object.
+   */
+  getPvp() {
+    return this.bot_.pvp;
   }
 }
 
@@ -98,6 +107,7 @@ function createMineflayerBot(host, port, username, version) {
 
   bot.loadPlugin(collectblock.plugin);
   bot.loadPlugin(pathfinder.pathfinder);
+  bot.loadPlugin(pvp.plugin);
 
   bot.on('end', this.createMineflayerBot_.bind(this));
   bot.on('error', (error) => {

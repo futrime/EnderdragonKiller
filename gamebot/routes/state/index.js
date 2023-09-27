@@ -3,7 +3,7 @@
 
 import consola from 'consola';
 import express from 'express';
-import {botToJson} from '../../lib/serializer.js';
+import {botToJson} from '../../lib/serialization.js';
 
 export const router = express.Router();
 
