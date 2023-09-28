@@ -11,6 +11,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
+    "ajv": "^8.12.0",
     "consola": "^3.2.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

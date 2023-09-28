@@ -10,6 +10,7 @@ import process from 'process';
 import {Bot} from './lib/bot.js';
 import {router as routerApiStatus} from './routes/status/index.js';
 import {router as routerApiProgram} from './routes/program/index.js';
+import Ajv from 'ajv';
 
 try {
   // Read environment variables.
@@ -25,11 +26,15 @@ try {
   consola.level = log_level;
 
   // Register the bot on the gateway.
-  const {username} = await registerBot(
-      listen_port,
-      gateway_host,
-      gateway_port,
-  );
+  const {username} =
+      await registerBot(
+          listen_port,
+          gateway_host,
+          gateway_port,
+          )
+          .catch((error) => {
+            throw new Error(`failed to register bot: ${error.message}`);
+          });
 
   // Create the bot.
   const bot = new Bot(
@@ -40,30 +45,7 @@ try {
   );
 
   // Set up express.
-  const app = express();
-
-  app.locals.bot = bot;
-
-  app.use(morgan('tiny'));
-  app.use(cors());
-  app.use(express.json());
-
-  app.use('/api/program', routerApiProgram)
-  app.use('/api/status', routerApiStatus);
-
-  app.use((_, res) => {
-    res.status(404).send({
-      apiVersion: '0.0.0',
-      error: {
-        code: 404,
-        message: 'The requested resource was not found.',
-      },
-    });
-  });
-
-  app.listen(listen_port, '0.0.0.0', () => {
-    consola.info(`listening on port ${listen_port}`);
-  });
+  await setupExpress(bot, listen_port);
 
 } catch (error) {
   consola.error(`process exited with error: ${error.message}`);
@@ -78,36 +60,78 @@ try {
  * @returns {Promise<{username: string}>} The username of the bot.
  */
 async function registerBot(listen_port, gateway_host, gateway_port) {
-  try {
-    consola.log('registering bot...');
+  consola.log('registering bot...');
 
-    consola.debug(`fetch('http://${gateway_host}:${gateway_port}/api/bots')`);
-    const res = await fetch(
-        `http://${gateway_host}:${gateway_port}/api/bots`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            apiVersion: '0.0.0',
-            data: {
-              port: listen_port,
+  const response =
+      await fetch(
+          `http://${gateway_host}:${gateway_port}/api/bots`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
-          }),
-        },
-    );
+            body: JSON.stringify({
+              apiVersion: '0.0.0',
+              data: {
+                port: listen_port,
+              },
+            }),
+          },
+          )
+          .catch((error) => {
+            throw new Error(`failed to fetch http://${gateway_host}:${
+                gateway_port}/api/bots: ${error.message}`);
+          });
 
-    const json = await res.json();
-    const result = {
-      username: json.data.username,
-    };
-
-    consola.log(`registered bot as ${result.username}`);
-
-    return result;
-
-  } catch (error) {
-    throw new Error(`failed to register bot: ${error.message}`);
+  if ([200, 409].includes(response.status) === false) {
+    throw new Error(`failed to fetch http://${gateway_host}:${
+        gateway_port}/api/bots:  ${response.status} ${response.statusText}`);
   }
+  if (response.status === 409) {
+    consola.warn('bot already registered, restart gateway if necessary');
+  }
+
+  const responseJson = await response.json().catch((error) => {
+    throw new Error(`failed to parse response: ${error.message}`);
+  });
+
+  const result = {
+    username: responseJson.data.username,
+  };
+
+  consola.log(`registered bot as ${result.username}`);
+
+  return result;
+}
+
+/**
+ * Sets up express.
+ * @param {Bot} bot The bot.
+ * @param {number} listen_port The port of the gamebot.
+ * @returns {Promise<express.Express>} The express app.
+ */
+async function setupExpress(bot, listen_port) {
+  const app = express()
+                  .use(morgan('tiny'))
+                  .use(cors())
+                  .use(express.json())
+                  .use('/api/program', routerApiProgram)
+                  .use('/api/status', routerApiStatus)
+                  .use((_, res) => {
+                    return res.status(404).send({
+                      apiVersion: '0.0.0',
+                      error: {
+                        code: 404,
+                        message: 'The requested resource was not found.',
+                      },
+                    });
+                  });
+
+  app.locals.bot = bot;
+
+  app.listen(listen_port, '0.0.0.0', () => {
+    consola.info(`listening on port ${listen_port}`);
+  });
+
+  return app;
 }
