@@ -4,6 +4,7 @@
 import consola from 'consola';
 import express from 'express';
 import {createProgram} from '../../lib/programs.js';
+import Ajv from 'ajv';
 
 export const router = express.Router();
 
@@ -13,20 +14,19 @@ router.get('/', async (req, res) => {
      * @type {import('../../lib/bot.js').Bot}
      */
     const bot = req.app.locals.bot;
-    const currentAction = bot.getEvalCurrentAction();
 
-    const currentActionJson = currentAction ? {
-      name: currentAction.getName(),
-      params: currentAction.getParamMap(),
-    } :
-                                              null;
+    const currentAction = bot.getEvalCurrentAction();
 
     return res.status(200).send({
       apiVersion: '0.0.0',
       data: {
         state: bot.getEvalState(),
         results: bot.getEvalResults(),
-        currentAction: currentActionJson,
+        currentAction: currentAction ? {
+          name: currentAction.getName(),
+          params: currentAction.getParamMap(),
+        } :
+                                       null,
       },
     });
 
@@ -49,9 +49,61 @@ router.route('/').put(async (req, res) => {
      */
     const bot = req.app.locals.bot;
 
-    // TODO: Validate request body
+    const responseJson = req.body;
 
-    const program = createProgram(req.body.data.program);
+    // validate response.
+    const SCHEMA = {
+      'type': 'object',
+      'properties': {
+        'apiVersion': {
+          'type': 'string',
+        },
+        'data': {
+          'type': 'object',
+          'properties': {
+            'program': {
+              'type': 'object',
+            }
+          },
+          'required': [
+            'program',
+          ]
+        }
+      },
+      'required': [
+        'apiVersion',
+        'data',
+      ],
+    };
+    const ajv = new Ajv();
+    const validate = ajv.compile(SCHEMA);
+    const valid = validate(responseJson);
+    if (valid !== true) {
+      return res.status(400).send({
+        apiVersion: '0.0.0',
+        error: {
+          code: 400,
+          message: `The request is invalid: ${JSON.stringify(validate.errors)}`,
+        },
+      });
+    }
+
+    /**
+     * @type {import('../../lib/programs.js').IProgram}
+     */
+    let program;
+    try {
+      program = createProgram(responseJson.data.program);
+
+    } catch (error) {
+      return res.status(400).send({
+        apiVersion: '0.0.0',
+        error: {
+          code: 400,
+          message: `The request is invalid: ${error.message}`,
+        },
+      });
+    }
 
     bot.eval(program);
 

@@ -26,6 +26,7 @@ try {
   consola.level = log_level;
 
   // Register the bot on the gateway.
+  consola.log('registering bot...');
   const {username} =
       await registerBot(
           listen_port,
@@ -35,6 +36,7 @@ try {
           .catch((error) => {
             throw new Error(`failed to register bot: ${error.message}`);
           });
+  consola.log(`registered bot as ${username}`);
 
   // Create the bot.
   const bot = new Bot(
@@ -60,8 +62,6 @@ try {
  * @returns {Promise<{username: string}>} The username of the bot.
  */
 async function registerBot(listen_port, gateway_host, gateway_port) {
-  consola.log('registering bot...');
-
   const response =
       await fetch(
           `http://${gateway_host}:${gateway_port}/api/bots`,
@@ -83,7 +83,7 @@ async function registerBot(listen_port, gateway_host, gateway_port) {
                 gateway_port}/api/bots: ${error.message}`);
           });
 
-  if ([200, 409].includes(response.status) === false) {
+  if ([201, 409].includes(response.status) === false) {
     throw new Error(`failed to fetch http://${gateway_host}:${
         gateway_port}/api/bots:  ${response.status} ${response.statusText}`);
   }
@@ -95,13 +95,41 @@ async function registerBot(listen_port, gateway_host, gateway_port) {
     throw new Error(`failed to parse response: ${error.message}`);
   });
 
-  const result = {
+  // Validate response.
+  const SCHEMA = {
+    'type': 'object',
+    'properties': {
+      'apiVersion': {
+        'type': 'string',
+      },
+      'data': {
+        'type': 'object',
+        'properties': {
+          'username': {
+            'type': 'string',
+          },
+        },
+        'required': [
+          'username',
+        ],
+      }
+    },
+    'required': [
+      'apiVersion',
+      'data',
+    ],
+  };
+  const ajv = new Ajv();
+  const validate = ajv.compile(SCHEMA);
+  const valid = validate(responseJson);
+  if (valid !== true) {
+    throw new Error(`got invalid response fetching http://${gateway_host}:${
+        gateway_port}/api/bots: ${JSON.stringify(validate.errors)}`);
+  }
+
+  return {
     username: responseJson.data.username,
   };
-
-  consola.log(`registered bot as ${result.username}`);
-
-  return result;
 }
 
 /**
@@ -114,7 +142,10 @@ async function setupExpress(bot, listen_port) {
   const app = express()
                   .use(morgan('tiny'))
                   .use(cors())
-                  .use(express.json())
+                  .use(express.json({
+                    strict: true,
+                  }))
+                  // TODO: handle errors.
                   .use('/api/program', routerApiProgram)
                   .use('/api/status', routerApiStatus)
                   .use((_, res) => {
