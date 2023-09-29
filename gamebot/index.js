@@ -124,7 +124,7 @@ async function registerBot(listen_port, gateway_host, gateway_port) {
   const valid = validate(responseJson);
   if (valid !== true) {
     throw new Error(`got invalid response fetching http://${gateway_host}:${
-        gateway_port}/api/bots: ${JSON.stringify(validate.errors)}`);
+        gateway_port}/api/bots: ${ajv.errorsText(validate.errors)}`);
   }
 
   return {

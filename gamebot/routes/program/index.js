@@ -8,7 +8,7 @@ import Ajv from 'ajv';
 
 export const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.route('/').get(async (req, res) => {
   try {
     /**
      * @type {import('../../lib/bot.js').Bot}
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
       apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: `Internal server error occured: ${error.message}`,
+        message: `Internal server error occured.`,
       },
     });
   }
@@ -98,7 +98,7 @@ router.route('/').put(async (req, res) => {
         apiVersion: '0.0.0',
         error: {
           code: 400,
-          message: `The request is invalid: ${JSON.stringify(validate.errors)}`,
+          message: `The request is invalid: ${ajv.errorsText(validate.errors)}`,
         },
       });
     }
@@ -130,7 +130,7 @@ router.route('/').put(async (req, res) => {
       apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: `Internal server error occured: ${error.message}`,
+        message: `Internal server error occured.`,
       },
     });
   }

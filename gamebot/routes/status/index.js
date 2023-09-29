@@ -28,7 +28,7 @@ router.route('/').get((req, res) => {
       apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: `Internal server error occured: ${error.message}`,
+        message: `Internal server error occured.`,
       },
     });
   }

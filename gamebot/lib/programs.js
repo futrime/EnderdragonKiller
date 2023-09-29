@@ -64,7 +64,7 @@ export class Action extends IProgram {
     const valid = validate(json);
     if (valid !== true) {
       throw new Error(
-          `invalid action JSON: ${JSON.stringify(validate.errors)}`);
+          `invalid action JSON: ${ajv.errorsText(validate.errors)}`);
     }
 
     /**
@@ -132,7 +132,7 @@ export class Sequence extends IProgram {
     const valid = validate(json);
     if (valid !== true) {
       throw new Error(
-          `invalid sequence JSON: ${JSON.stringify(validate.errors)}`);
+          `invalid sequence JSON: ${ajv.errorsText(validate.errors)}`);
     }
 
     try {
@@ -182,7 +182,7 @@ export function createProgram(json) {
   const validate = ajv.compile(SCHEMA);
   const valid = validate(json);
   if (valid !== true) {
-    throw new Error(`invalid program JSON: ${JSON.stringify(validate.errors)}`);
+    throw new Error(`invalid program JSON: ${ajv.errorsText(validate.errors)}`);
   }
 
   switch (json.type) {
