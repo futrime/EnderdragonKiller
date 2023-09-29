@@ -195,11 +195,11 @@ router.route('/:username/*').all(async (req, res) => {
       response.headers.forEach((value, key) => {
         res.setHeader(key, value);
       });
-      res.send(await response.json());
+      res.send(await response.text());
 
     } catch (error) {
-      res.status(502);
-      res.send({
+      consola.error(`Error: ${error.message}`);
+      res.status(502).send({
         apiVersion: '0.0.0',
         error: {
           code: 502,
