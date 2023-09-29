@@ -29,31 +29,40 @@ try {
   const bots = [];
 
   // Set up express.
-  const app = express();
+  setupExpress(bots, listen_port);
+
+} catch (error) {
+  consola.error(`process exited with error: ${error.message}`);
+  process.exit(1);
+}
+
+/**
+ * Sets up express.
+ * @param {import('./lib/bot').Bot[]} bots The bots.
+ * @param {number} listen_port The port of the gateway.
+ * @returns {express.Express} The express app.
+ */
+function setupExpress(bots, listen_port) {
+  const app = express()
+                  .use(morgan('tiny'))
+                  .use(cors())
+                  .use(express.raw({type: '*/*'}))
+                  .use('/api/bots', routerApiBots)
+                  .use((_, res) => {
+                    res.status(404).send({
+                      apiVersion: '0.0.0',
+                      error: {
+                        code: 404,
+                        message: 'The requested resource was not found.',
+                      }
+                    });
+                  });
 
   app.locals.bots = bots;
-
-  app.use(morgan('tiny'));
-  app.use(cors());
-  app.use(express.json());
-
-  app.use('/api/bots', routerApiBots);
-
-  app.use((_, res) => {
-    res.status(404).send({
-      apiVersion: '0.0.0',
-      error: {
-        code: 404,
-        message: 'The requested resource was not found.',
-      }
-    });
-  });
 
   app.listen(listen_port, '0.0.0.0', () => {
     consola.info(`listening on port ${listen_port}`);
   });
 
-} catch (error) {
-  consola.error(`process exited with error: ${error.message}`);
-  process.exit(1);
+  return app;
 }

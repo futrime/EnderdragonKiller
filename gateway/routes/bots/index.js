@@ -6,6 +6,7 @@ import express from 'express';
 import {faker} from '@faker-js/faker';
 import {Bot} from '../../lib/bot.js';
 import path from 'path';
+import Ajv from 'ajv';
 
 export const router = express.Router();
 
@@ -33,7 +34,7 @@ router.route('/').get(async (req, res) => {
       apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: `Internal server error occured: ${error.message}`,
+        message: `Internal server error occured.`,
       },
     });
   }
@@ -65,11 +66,52 @@ router.route('/').post(async (req, res) => {
       }
     }
 
-    // TODO: Validate with JSON schema.
+    /**
+     * @type {Object}
+     */
+    let responseJson;
+    try {
+      responseJson = JSON.parse(req.body);
+    } catch (error) {
+      return res.status(400).send({
+        apiVersion: '0.0.0',
+        error: {
+          code: 400,
+          message: `The request is invalid: ${error.message}`,
+        },
+      });
+    }
+
+    // Validate response.
+    const SCHEMA = {
+      'type': 'object',
+      'properties': {
+        'apiVersion': {'type': 'string'},
+        'data': {
+          'type': 'object',
+          'properties': {'port': {'type': 'integer'}},
+          'required': ['port']
+        }
+      },
+      'required': ['apiVersion', 'data']
+    };
+    const ajv = new Ajv();
+    const validate = ajv.compile(SCHEMA);
+    const valid = validate(responseJson);
+    if (valid !== true) {
+      return res.status(400).send({
+        apiVersion: '0.0.0',
+        error: {
+          code: 400,
+          message: `The request is invalid: ${ajv.errorsText(validate.errors)}`,
+        },
+      });
+    }
+
     /**
      * @type {number}
      */
-    const port = req.body.data.port;
+    const port = responseJson.data.port;
 
     const username =
         bots.length === 0 ? 'Commander' : faker.person.firstName('female');
@@ -98,7 +140,7 @@ router.route('/').post(async (req, res) => {
       apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: `Internal server error occured: ${error.message}`,
+        message: `Internal server error occured.`,
       },
     });
   }
@@ -167,18 +209,12 @@ router.route('/:username/*').all(async (req, res) => {
     }
 
   } catch (error) {
-    consola.error(` Error: $ {
-        error.message
-      }
-      `);
+    consola.error(`Error: ${error.message}`);
     return res.status(500).send({
       apiVersion: '0.0.0',
       error: {
         code: 500,
-        message: ` Internal server error occured: $ {
-        error.message
-      }
-    `,
+        message: `Internal server error occured.`,
       },
     });
   }
