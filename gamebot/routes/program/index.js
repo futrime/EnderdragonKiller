@@ -49,7 +49,22 @@ router.route('/').put(async (req, res) => {
      */
     const bot = req.app.locals.bot;
 
-    const responseJson = req.body;
+    /**
+     * @type {Object}
+     */
+    let responseJson;
+    try {
+      responseJson = JSON.parse(req.body);
+
+    } catch (error) {
+      return res.status(400).send({
+        apiVersion: '0.0.0',
+        error: {
+          code: 400,
+          message: `The request is invalid: ${error.message}`,
+        },
+      });
+    }
 
     // validate response.
     const SCHEMA = {

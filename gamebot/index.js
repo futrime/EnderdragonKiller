@@ -142,10 +142,7 @@ async function setupExpress(bot, listen_port) {
   const app = express()
                   .use(morgan('tiny'))
                   .use(cors())
-                  .use(express.json({
-                    strict: true,
-                  }))
-                  // TODO: handle errors.
+                  .use(express.raw({type: '*/*'}))
                   .use('/api/program', routerApiProgram)
                   .use('/api/status', routerApiStatus)
                   .use((_, res) => {
