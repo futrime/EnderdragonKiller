@@ -139,21 +139,22 @@ async function registerBot(listen_port, gateway_host, gateway_port) {
  * @returns {Promise<express.Express>} The express app.
  */
 async function setupExpress(bot, listen_port) {
-  const app = express()
-                  .use(morgan('tiny'))
-                  .use(cors())
-                  .use(express.raw({type: '*/*'}))
-                  .use('/api/program', routerApiProgram)
-                  .use('/api/status', routerApiStatus)
-                  .use((_, res) => {
-                    return res.status(404).send({
-                      apiVersion: '0.0.0',
-                      error: {
-                        code: 404,
-                        message: 'The requested resource was not found.',
-                      },
-                    });
-                  });
+  const app =
+      express()
+          .use(morgan('tiny'))
+          .use(cors())
+          .use(express.raw({type: '*/*'}))
+          .use(`/api/bots/${bot.getUsername()}/program`, routerApiProgram)
+          .use(`/api/bots/${bot.getUsername()}/status`, routerApiStatus)
+          .use((_, res) => {
+            return res.status(404).send({
+              apiVersion: '0.0.0',
+              error: {
+                code: 404,
+                message: 'The requested resource was not found.',
+              },
+            });
+          });
 
   app.locals.bot = bot;
 

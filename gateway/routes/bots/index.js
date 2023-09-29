@@ -180,7 +180,9 @@ router.route('/:username/*').all(async (req, res) => {
       }
 
       const url = path.join(
-          `http://${bot.getIp()}:${bot.getPort()}/api`, req.params[0]);
+          `http://${bot.getIp()}:${bot.getPort()}/api/bots/${
+              bot.getUsername()}`,
+          req.params[0]);
 
       const response = await fetch(url, {
         headers: requestHeaders,
@@ -202,8 +204,7 @@ router.route('/:username/*').all(async (req, res) => {
         error: {
           code: 502,
           message:
-              ` Error occured while communicating with bot: ${error.message}
-      `,
+              `Error occured while communicating with bot: ${error.message}`,
         },
       });
     }

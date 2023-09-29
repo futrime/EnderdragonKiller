@@ -47,6 +47,11 @@ export class Bot {
      * @private
      */
     this.evalState_ = 'ready';
+    /**
+     * @type {string}
+     * @private
+     */
+    this.username_ = username;
   }
 
   /**
@@ -141,6 +146,14 @@ export class Bot {
    */
   getPvp() {
     return this.bot_.pvp;
+  }
+
+  /**
+   * Gets the username.
+   * @returns {string} The username.
+   */
+  getUsername() {
+    return this.username_;
   }
 
   /**
