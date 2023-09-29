@@ -190,7 +190,13 @@ export class Bot {
     bot.loadPlugin(pathfinder.pathfinder);
     bot.loadPlugin(pvp.plugin);
 
-    bot.on('end', this.createMineflayerBot_.bind(this));
+    bot.on('end', (async () => {
+             consola.log(`bot ended, restarting in 5 seconds...`);
+             await new Promise((resolve) => setTimeout(resolve, 5000));
+
+             this.bot_ =
+                 this.createMineflayerBot_(host, port, username, version);
+           }));
     bot.on('error', (error) => {
       consola.error(`bot error: ${error.message}`);
     });
