@@ -1,3 +1,3 @@
 # EnderdragonKiller
 
-A Minecraft bot to kill the enderdragon powered by LLMs
+A Minecraft multi-agent bot to kill the enderdragon powered by LLMs, EdK for short

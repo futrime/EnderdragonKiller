@@ -12,7 +12,7 @@ Thank you for your contribution to the repository.
 Before submitting this PR, please make sure:
 
 - [ ] Your code builds clean without any errors or warnings
-- [ ] Your code follows the code style of [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+- [ ] Your code follows the code style of [The Black code style](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html) or [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html)
 - [ ] You have tested all functions
 - [ ] You have not used code without license
 - [ ] You have added statement for third-party code
