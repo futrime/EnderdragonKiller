@@ -1,12 +1,12 @@
-import os
-import json
 import copy
+import json
+import os
 
 
 class KnowledgeBase:
     def __init__(
         self,
-        base_path: str = "./knowledge_base",
+        base_path: str = os.path.join(os.path.dirname(__file__), "data"),
         recipe: bool = True,
         loot: bool = True,
     ):
@@ -16,9 +16,9 @@ class KnowledgeBase:
         :param loot: load loot or not
         """
         self.__base_path = base_path
-        self.Load(recipe, loot)
+        self.load(recipe, loot)
 
-    def Load(self, recipe: bool = True, loot: bool = True):
+    def load(self, recipe: bool = True, loot: bool = True):
         """
         :param recipe: load recipe or not
         :param loot: load loot or not
@@ -28,11 +28,11 @@ class KnowledgeBase:
         self.__material_to_crafted = {}
         self.__crafted_to_material = {}
         if self.__recipe:
-            self.__LoadRecipe()
+            self._load_recipe()
         if self.__loot:
-            self.__LoadLoot()
+            self._load_loot()
 
-    def __LoadShapeless(self, recipe):
+    def _load_recipe_shapeless(self, recipe):
         """
         :param recipe: dict, a shapeless recipe
         Load a shapeless recipe
@@ -131,7 +131,7 @@ class KnowledgeBase:
                             this_recipe[ind]["recipe"][item_.split(":")[1]] += 1
         self.__crafted_to_material[crafted].extend(this_recipe)
 
-    def __LoadShaped(self, recipe):
+    def _load_recipe_shaped(self, recipe):
         """
         :param recipe: dict, a shaped recipe
         Load a shaped recipe
@@ -282,7 +282,7 @@ class KnowledgeBase:
 
         self.__crafted_to_material[crafted].extend(this_recipe)
 
-    def __LoadFurnace(self, recipe):
+    def _load_recipe_furnace(self, recipe):
         """
         :param recipe: dict, a furnace recipe
         Load a furnace recipe
@@ -336,7 +336,7 @@ class KnowledgeBase:
 
         self.__crafted_to_material[crafted].extend(this_recipe)
 
-    def __LoadRecipe(self):
+    def _load_recipe(self):
         """
         Load recipe from knowledge base
         """
@@ -348,13 +348,13 @@ class KnowledgeBase:
                 craft_type = recipe["type"]
 
                 if craft_type == "minecraft:crafting_shapeless":
-                    self.__LoadShapeless(recipe)
+                    self._load_recipe_shapeless(recipe)
                 elif craft_type == "minecraft:crafting_shaped":
-                    self.__LoadShaped(recipe)
+                    self._load_recipe_shaped(recipe)
                 elif craft_type == "minecraft:smelting":
-                    self.__LoadFurnace(recipe)
+                    self._load_recipe_furnace(recipe)
 
-    def __LoadLootTable(self, loot, name):
+    def _load_loot_table(self, loot, name):
         """
         :param loot: dict, a loot table
         Load a loot table
@@ -394,7 +394,7 @@ class KnowledgeBase:
                             {"item": item_name, "type": recipe_type}
                         )
 
-    def __LoadLoot(self):
+    def _load_loot(self):
         """
         Load loot from knowledge base
         """
@@ -404,7 +404,7 @@ class KnowledgeBase:
             if loot_file.endswith(".json"):
                 with open(f"{loot_path}/{loot_file}", "r") as f:
                     loot = json.load(f)
-                    self.__LoadLootTable(loot, loot_file.split(".")[0])
+                    self._load_loot_table(loot, loot_file.split(".")[0])
 
     @property
     def material_to_crafted(self):

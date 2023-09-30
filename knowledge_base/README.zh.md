@@ -1,8 +1,6 @@
-# Knowledge Base
+# EdK Knowledge Base
 
-李羿璇
-
-主要作用：用作游戏内知识的查询
+The knowledge base containing related knowledge of Minecraft.
 
 ## 开发进度
 

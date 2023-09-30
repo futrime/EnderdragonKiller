@@ -1,3 +1,3 @@
-# EnderdragonKiller GameBot
+# EdK Game Bot
 
-The Minecraft bot for EnderdragonKiller.
+The Minecraft bot
