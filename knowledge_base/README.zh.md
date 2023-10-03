@@ -16,6 +16,8 @@ The knowledge base containing related knowledge of Minecraft.
 
 2023.9.26 增加了怪物掉落表的查询
 
+2023.10.4 增加了方块掉落及挖掘条件的查询
+
 ## 使用方法
 
 ```python

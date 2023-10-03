@@ -9,6 +9,7 @@ class KnowledgeBase:
         base_path: str = os.path.join(os.path.dirname(__file__), "data"),
         recipe: bool = True,
         loot: bool = True,
+        drop: bool = True,
     ):
         """
         :param base_path: str, path to the knowledge base
@@ -16,21 +17,24 @@ class KnowledgeBase:
         :param loot: load loot or not
         """
         self.__base_path = base_path
-        self.load(recipe, loot)
+        self.load(recipe, loot, drop)
 
-    def load(self, recipe: bool = True, loot: bool = True):
+    def load(self, recipe: bool = True, loot: bool = True, drop: bool = True):
         """
         :param recipe: load recipe or not
         :param loot: load loot or not
         """
         self.__recipe = recipe
         self.__loot = loot
+        self.__drop = drop
         self.__material_to_crafted = {}
         self.__crafted_to_material = {}
         if self.__recipe:
             self._load_recipe()
         if self.__loot:
             self._load_loot()
+        if self.__drop:
+            self._load_drop()
 
     def _load_recipe_shapeless(self, recipe):
         """
@@ -334,6 +338,36 @@ class KnowledgeBase:
                         )
                 this_recipe[ind]["recipe"][item["item"].split(":")[1]] = 1
 
+        if "tag" in recipe["ingredient"]:
+            tag = recipe["ingredient"]["tag"].split(":")[1]
+            with open(f"{self.__base_path}/tags/items/{tag}.json", "r") as f:
+                tag = json.load(f)
+                recipe_list = tag["values"]
+                for item in recipe_list:
+                    if item.startswith("#minecraft:"):
+                        recipe_list.remove(item)
+                        with open(
+                            f"{self.__base_path}/tags/items/{item.split(':')[1]}.json",
+                            "r",
+                        ) as f:
+                            tag = json.load(f)
+                            recipe_list.extend(tag["values"])
+                for _ in range(len(recipe_list) - 1):
+                    this_recipe.append(copy.deepcopy(this_recipe[0]))
+                for ind, item_ in enumerate(recipe_list):
+                    if item_.split(":")[1] not in self.__material_to_crafted:
+                        self.__material_to_crafted[item_.split(":")[1]] = [
+                            {"item": crafted, "type": recipe_type}
+                        ]
+                    else:
+                        for item in self.__material_to_crafted[item_.split(":")[1]]:
+                            if item["item"] == crafted:
+                                break
+                        else:
+                            self.__material_to_crafted[item_.split(":")[1]].append(
+                                {"item": crafted, "type": recipe_type}
+                            )
+                    this_recipe[ind]["recipe"][item_.split(":")[1]] = 1
         self.__crafted_to_material[crafted].extend(this_recipe)
 
     def _load_recipe(self):
@@ -357,6 +391,7 @@ class KnowledgeBase:
     def _load_loot_table(self, loot, name):
         """
         :param loot: dict, a loot table
+        :param name: str, name of the loot table
         Load a loot table
         """
         if "pools" not in loot:
@@ -375,7 +410,7 @@ class KnowledgeBase:
                     ]
                 else:
                     for item_ in self.__crafted_to_material[item_name]:
-                        if item_["recipe"] == {name: 1}:
+                        if item_ == {"recipe": {name: 1}, "type": recipe_type}:
                             break
                     else:
                         self.__crafted_to_material[item_name].append(
@@ -387,7 +422,7 @@ class KnowledgeBase:
                     ]
                 else:
                     for item_ in self.__material_to_crafted[name]:
-                        if item_["item"] == item_name:
+                        if item_ == {"item": item_name, "type": recipe_type}:
                             break
                     else:
                         self.__material_to_crafted[name].append(
@@ -405,6 +440,280 @@ class KnowledgeBase:
                 with open(f"{loot_path}/{loot_file}", "r") as f:
                     loot = json.load(f)
                     self._load_loot_table(loot, loot_file.split(".")[0])
+
+    def _load_drop_table(self, drop, name):
+        """
+        :param drop: dict, a drop table
+        :param name: str, name of the drop table
+        Load a drop table
+        """
+        if "pools" not in drop:
+            return
+
+        recipe_type = "mine"
+
+        for pool in drop["pools"]:
+            for item in pool["entries"]:
+                if "children" in item:
+                    for child in item["children"]:
+                        if "name" not in child:
+                            continue
+                        item_name = child["name"].split(":")[1]
+                        if item_name not in self.__crafted_to_material:
+                            self.__crafted_to_material[item_name] = [
+                                {"recipe": {name: 1}, "type": recipe_type}
+                            ]
+                        else:
+                            for item_ in self.__crafted_to_material[item_name]:
+                                if item_ == {"recipe": {name: 1}, "type": recipe_type}:
+                                    break
+                            else:
+                                self.__crafted_to_material[item_name].append(
+                                    {"recipe": {name: 1}, "type": recipe_type}
+                                )
+                        if name not in self.__material_to_crafted:
+                            self.__material_to_crafted[name] = [
+                                {"item": item_name, "type": recipe_type}
+                            ]
+                        else:
+                            for item_ in self.__material_to_crafted[name]:
+                                if item_ == {"item": item_name, "type": recipe_type}:
+                                    break
+                            else:
+                                self.__material_to_crafted[name].append(
+                                    {"item": item_name, "type": recipe_type}
+                                )
+                if "name" not in item:
+                    continue
+                item_name = item["name"].split(":")[1]
+                if item_name not in self.__crafted_to_material:
+                    self.__crafted_to_material[item_name] = [
+                        {"recipe": {name: 1}, "type": recipe_type}
+                    ]
+                else:
+                    for item_ in self.__crafted_to_material[item_name]:
+                        if item_ == {"recipe": {name: 1}, "type": recipe_type}:
+                            break
+                    else:
+                        self.__crafted_to_material[item_name].append(
+                            {"recipe": {name: 1}, "type": recipe_type}
+                        )
+                if name not in self.__material_to_crafted:
+                    self.__material_to_crafted[name] = [
+                        {"item": item_name, "type": recipe_type}
+                    ]
+                else:
+                    for item_ in self.__material_to_crafted[name]:
+                        if item_ == {"item": item_name, "type": recipe_type}:
+                            break
+                    else:
+                        self.__material_to_crafted[name].append(
+                            {"item": item_name, "type": recipe_type}
+                        )
+
+    def _add_condition(self, drop, name):
+        if "pools" not in drop:
+            return
+
+        for pool in drop["pools"]:
+            if "conditions" in pool:
+                for condition in pool["conditions"]:
+                    condition_str = self._get_condition(condition)
+                    if condition_str == "":
+                        continue
+                    for item in pool["entries"]:
+                        if "children" in item:
+                            for child in item["children"]:
+                                if "name" not in child:
+                                    continue
+                                item_name = child["name"].split(":")[1]
+                                for item_ in self.__crafted_to_material[item_name]:
+                                    if (
+                                        item_["recipe"] == {name: 1}
+                                        and item_["type"] == "mine"
+                                    ):
+                                        if "condition" not in item_:
+                                            item_["condition"] = condition_str
+                                        else:
+                                            item_["condition"] += (
+                                                " and " + condition_str
+                                            )
+                                        break
+                                for item_ in self.__material_to_crafted[name]:
+                                    if (
+                                        item_["item"] == item_name
+                                        and item_["type"] == "mine"
+                                    ):
+                                        if "condition" not in item_:
+                                            item_["condition"] = condition_str
+                                        else:
+                                            item_["condition"] += (
+                                                " and " + condition_str
+                                            )
+                                        break
+
+                        if "name" not in item:
+                            continue
+                        item_name = item["name"].split(":")[1]
+                        for item_ in self.__crafted_to_material[item_name]:
+                            if item_["recipe"] == {name: 1} and item_["type"] == "mine":
+                                if "condition" not in item_:
+                                    item_["condition"] = condition_str
+                                else:
+                                    item_["condition"] += " and " + condition_str
+                                break
+                        for item_ in self.__material_to_crafted[name]:
+                            if item_["item"] == item_name and item_["type"] == "mine":
+                                if "condition" not in item_:
+                                    item_["condition"] = condition_str
+                                else:
+                                    item_["condition"] += " and " + condition_str
+                                break
+            for item in pool["entries"]:
+                if "children" in item:
+                    for child in item["children"]:
+                        if "name" not in child:
+                            continue
+                        if "conditions" not in child:
+                            continue
+                        item_name = child["name"].split(":")[1]
+                        for condition in child["conditions"]:
+                            condition_str = self._get_condition(condition)
+                            if condition_str == "":
+                                continue
+                            for item_ in self.__crafted_to_material[item_name]:
+                                if (
+                                    item_["recipe"] == {name: 1}
+                                    and item_["type"] == "mine"
+                                ):
+                                    if "condition" not in item_:
+                                        item_["condition"] = condition_str
+                                    else:
+                                        item_["condition"] += " and " + condition_str
+                                    break
+                            for item_ in self.__material_to_crafted[name]:
+                                if (
+                                    item_["item"] == item_name
+                                    and item_["type"] == "mine"
+                                ):
+                                    if "condition" not in item_:
+                                        item_["condition"] = condition_str
+                                    else:
+                                        item_["condition"] += " and " + condition_str
+                                    break
+
+                if "name" not in item:
+                    continue
+                item_name = item["name"].split(":")[1]
+                if "conditions" not in item:
+                    continue
+                for condition in item["conditions"]:
+                    condition_str = self._get_condition(condition)
+                    if condition_str == "":
+                        continue
+                    for item_ in self.__crafted_to_material[item_name]:
+                        if item_["recipe"] == {name: 1} and item_["type"] == "mine":
+                            if "condition" not in item_:
+                                item_["condition"] = condition_str
+                            else:
+                                item_["condition"] += " and " + condition_str
+                            break
+                    for item_ in self.__material_to_crafted[name]:
+                        if item_["item"] == item_name and item_["type"] == "mine":
+                            if "condition" not in item_:
+                                item_["condition"] = condition_str
+                            else:
+                                item_["condition"] += " and " + condition_str
+                            break
+
+    def _get_condition(self, condition):
+        """
+        :param condition: dict, a condition dict
+        :return: str, the condition
+        """
+        if condition["condition"] == "minecraft:match_tool":
+            if "items" in condition["predicate"]:
+                condition_str = "tool:"
+                for item in condition["predicate"]["items"]:
+                    condition_str += item.split(":")[1] + ","
+                return condition_str[:-1]
+            elif "enchantments" in condition["predicate"]:
+                condition_str = "enchant:"
+                for enchant in condition["predicate"]["enchantments"]:
+                    condition_str += enchant["enchantment"].split(":")[1] + ","
+                return condition_str[:-1]
+        elif condition["condition"] == "minecraft:table_bonus":
+            return "table_bonus"
+        elif condition["condition"] == "minecraft:alternative":
+            condition_str = ""
+            for condition_ in condition["terms"]:
+                condition_str += self._get_condition(condition_) + " or "
+            return condition_str[:-4]
+        elif condition["condition"] == "minecraft:inverted":
+            condition_str = "not "
+            condition_str += self._get_condition(condition["term"])
+            return condition_str
+        else:
+            return ""
+
+    def _add_mine_condition(self):
+        with open(f"{self.__base_path}/blocks.json") as f:
+            blocks = json.load(f)
+            for block in blocks:
+                if block["material"] == "mineable/pickaxe":
+                    if "harvestTools" not in block:
+                        continue
+                    condition_str = "tool:"
+                    if "737" in block["harvestTools"]:
+                        condition_str += "any pickaxe"
+                    elif "742" in block["harvestTools"]:
+                        condition_str += "pickaxe better than stone"
+                    elif "752" in block["harvestTools"]:
+                        condition_str += "pickaxe better than iron"
+                    elif "757" in block["harvestTools"]:
+                        condition_str += "pickaxe better than diamond"
+                    elif "762" in block["harvestTools"]:
+                        condition_str += "netherite pickaxe"
+                    else:
+                        continue
+                    if block["name"] in self.__material_to_crafted:
+                        for item in self.__material_to_crafted[block["name"]]:
+                            if item["type"] == "mine":
+                                if "condition" not in item:
+                                    item["condition"] = condition_str
+                                else:
+                                    item["condition"] += " and " + condition_str
+                                for item_ in self.__crafted_to_material[item["item"]]:
+                                    if (
+                                        item_["recipe"] == {block["name"]: 1}
+                                        and item_["type"] == "mine"
+                                    ):
+                                        if "condition" not in item_:
+                                            item_["condition"] = condition_str
+                                        else:
+                                            item_["condition"] += (
+                                                " and " + condition_str
+                                            )
+                                        break
+
+    def _load_drop(self):
+        """
+        Load drop from knowledge base
+        """
+        drop_path = f"{self.__base_path}/loot_tables/blocks"
+        for drop_file in os.listdir(drop_path):
+            if drop_file.endswith(".json"):
+                with open(f"{drop_path}/{drop_file}", "r") as f:
+                    drop = json.load(f)
+                    self._load_drop_table(drop, drop_file.split(".")[0])
+
+        for drop_file in os.listdir(drop_path):
+            if drop_file.endswith(".json"):
+                with open(f"{drop_path}/{drop_file}", "r") as f:
+                    drop = json.load(f)
+                    self._add_condition(drop, drop_file.split(".")[0])
+
+        self._add_mine_condition()
 
     @property
     def material_to_crafted(self):
