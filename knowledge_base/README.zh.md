@@ -18,24 +18,37 @@ The knowledge base containing related knowledge of Minecraft.
 
 2023.10.4 增加了方块掉落及挖掘条件的查询
 
-## 使用方法
+## 基本使用示例
 
 ```python
-import KnowledgeBase
+import knowledge_base as kblib
 
-kb = KnowledgeBase.KnowledgeBase()
-print(kb.crafted_to_material["iron_ingot"])
-"""
-返回值：
-[{'recipe': {'iron_block': 1}, 'type': 'player'}, {'recipe': {'iron_nugget': 9}, 'type': 'crafting_table'}
-考虑了多种合成表存在的可能性，因此是一个列表。
-"""
+kb = kblib.KnowledgeBase()
+print(kb.crafted_to_material["diamond"])
 print(kb.material_to_crafted["diamond"])
-"""
-返回值：
-[{'item': 'diamond_axe', 'type': 'crafting_table'}, {'item': 'diamond_block', ...
-"""
+
 ```
+>输出 1：`[{'recipe': {'diamond_block': 1}, 'type': 'player'}, {'recipe': {'de epslate_diamond_ore': 1}, 'type': 'furnace'}, {'recipe': {'diamond_ore': 1}, 'type': 'furnace'}, {'recipe': {'deepslate_diamond_ore': 1}, 'type': 'mine', 'condition': 'tool: pickaxe better than iron'}, {'recipe': {'diamond_ore': 1}, 'type': 'mine', 'condition': 'tool: pickaxe better than iron'}]`
+>
+>输出 2：`[{'item': 'diamond_axe', 'type': 'crafting_table'}, {'item': 'diamond_block', 'type': 'crafting_table'}, {'item': 'diamond_boots', 'type': 'crafting_table'}, {'item': 'diamond_chestplate', 'type': 'crafting_table'}, {'item': 'diamond_helmet', 'type': 'crafting_table'}, {'item': 'diamond_hoe', 'type': 'crafting_table'}, {'item': 'diamond_leggings', 'type': 'crafting_table'}, {'item': 'diamond_pickaxe', 'type': 'crafting_table'}, {'item': 'diamond_shovel', 'type': 'crafting_table'}, {'item': 'diamond_sword', 'type': 'crafting_table'}, {'item': 'enchanting_table', 'type': 'crafting_table'}, {'item': 'jukebox', 'type': 'crafting_table'}]`
+
+## 使用方法详解
+
+### `crafted_to_material`
+
+`crafted_to_material` 是一个字典，键为合成物品，值是一个列表，列表中的每个元素都是一个字典，字典中包含了合成的原材料，合成的类型，以及条件（如果有的话）。
+
+### `material_to_crafted`
+
+`material_to_crafted` 是一个字典，键为原材料，值是一个列表，列表中的每个元素都是一个字典，字典中包含了原材料的合成物品，合成的类型，以及条件（如果有的话）。
+
+### 合成类型
+
+现在有 `player`（使用 4x4 合成表合成）、`crafting_table`（使用 3x3 合成表合成）、`furnace`（使用熔炉烧制）、`mine`（挖掘方块掉落）、`combat`（战斗怪物掉落）五种合成类型。
+
+### 条件
+
+目前只有挖掘有条件，条件主要有 `table_bonus`（随机掉落）、`tool`（工具限制，包括但不限于“精准采集”“使用比石镐更好的镐子”等）
 
 ## 已知问题
 

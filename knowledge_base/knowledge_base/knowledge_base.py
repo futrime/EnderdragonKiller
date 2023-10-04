@@ -633,7 +633,7 @@ class KnowledgeBase:
         """
         if condition["condition"] == "minecraft:match_tool":
             if "items" in condition["predicate"]:
-                condition_str = "tool:"
+                condition_str = "tool: "
                 for item in condition["predicate"]["items"]:
                     condition_str += item.split(":")[1] + ","
                 return condition_str[:-1]
@@ -663,7 +663,7 @@ class KnowledgeBase:
                 if block["material"] == "mineable/pickaxe":
                     if "harvestTools" not in block:
                         continue
-                    condition_str = "tool:"
+                    condition_str = "tool: "
                     if "737" in block["harvestTools"]:
                         condition_str += "any pickaxe"
                     elif "742" in block["harvestTools"]:
