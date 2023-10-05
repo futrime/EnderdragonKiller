@@ -161,3 +161,4 @@ cython_debug/
 #.idea/
 
 knowledge_base/test.py
+knowledge_base/data/qa.json

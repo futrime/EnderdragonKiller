@@ -10,6 +10,7 @@ class KnowledgeBase:
         recipe: bool = True,
         loot: bool = True,
         drop: bool = True,
+        resume: bool = False,
     ):
         """
         :param base_path: str, path to the knowledge base
@@ -17,9 +18,9 @@ class KnowledgeBase:
         :param loot: load loot or not
         """
         self.__base_path = base_path
-        self.load(recipe, loot, drop)
+        self.load(recipe, loot, drop, resume)
 
-    def load(self, recipe: bool = True, loot: bool = True, drop: bool = True):
+    def load(self, recipe, loot, drop, resume):
         """
         :param recipe: load recipe or not
         :param loot: load loot or not
@@ -27,14 +28,19 @@ class KnowledgeBase:
         self.__recipe = recipe
         self.__loot = loot
         self.__drop = drop
+        self.__resume = resume
         self.__material_to_crafted = {}
         self.__crafted_to_material = {}
+        self.__qa = {}
         if self.__recipe:
             self._load_recipe()
         if self.__loot:
             self._load_loot()
         if self.__drop:
             self._load_drop()
+        if self.__resume:
+            with open(f"{self.__base_path}/qa.json", "r") as f:
+                self.__qa = json.load(f)
 
     def _load_recipe_shapeless(self, recipe):
         """
@@ -714,6 +720,33 @@ class KnowledgeBase:
                     self._add_condition(drop, drop_file.split(".")[0])
 
         self._add_mine_condition()
+
+    def add_qa(self, question: str = "", answer: str = ""):
+        """
+        :param question: str, question
+        :param answer: str, answer
+        Add a question-answer pair to the knowledge base
+        """
+        self.__qa[question] = answer
+        if question == "":
+            question = input("Question: ")
+        if answer == "":
+            answer = input("Answer: ")
+        with open(f"{self.__base_path}/qa.json", "w") as f:
+            qa = json.dumps(self.__qa, indent=4)
+            f.write(qa)
+
+    def get_qa(self, key_word: str) -> dict[str, str]:
+        """
+        :param question: str, question
+        :return: str, answer
+        Get the answer of a question
+        """
+        qa_dict = {}
+        for question in self.__qa:
+            if key_word in question:
+                qa_dict[question] = self.__qa[question]
+        return qa_dict
 
     @property
     def material_to_crafted(self):
