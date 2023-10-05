@@ -7,7 +7,7 @@ import express from 'express';
 import morgan from 'morgan';
 import process from 'process';
 
-import { Bot } from './lib/bot.js';
+import {Bot} from './lib/bot';
 
 main().catch((error) => {
   consola.error(`process exited with error: ${error.message}`);
@@ -49,7 +49,9 @@ async function main() {
   );
 
   // Set up express.
-  await setupExpress(bot, listen_port);
+  await setupExpress(bot, listen_port).catch((error) => {
+    throw new Error(`failed to set up express: ${error.message}`);
+  });
 }
 
 /**

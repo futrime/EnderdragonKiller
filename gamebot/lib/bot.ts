@@ -1,6 +1,3 @@
-//@ts-check
-'use strict';
-
 import consola from 'consola';
 import minecraftData from 'minecraft-data';
 import mineflayer from 'mineflayer';
@@ -8,9 +5,6 @@ import collectblock from 'mineflayer-collectblock';
 import pathfinder from 'mineflayer-pathfinder';
 import pvp from 'mineflayer-pvp';
 
-/**
- * Represents a bot that can play Minecraft.
- */
 export class Bot {
   private wrappedMineflayerBot: mineflayer.Bot;
   private readonly mcdata: minecraftData.IndexedData;
