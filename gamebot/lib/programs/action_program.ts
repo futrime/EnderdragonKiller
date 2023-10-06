@@ -1,4 +1,6 @@
-import {ActionInvocation, Program} from './program.js';
+import {ActionInvocation} from '../action_invocation.js';
+
+import {Program} from './program.js';
 
 export class ActionProgram extends Program {
   constructor(public readonly action: string, public readonly args: {

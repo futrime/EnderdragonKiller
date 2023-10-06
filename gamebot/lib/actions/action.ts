@@ -2,11 +2,7 @@ import {EventEmitter} from 'stream';
 
 import {Bot} from '../bot.js';
 
-export enum ActionStatus {
-  STOPPED,
-  RUNNING,
-  PAUSED,
-}
+import {ActionStatus} from './action_status.js';
 
 export abstract class Action {
   readonly eventEmitter = new EventEmitter();

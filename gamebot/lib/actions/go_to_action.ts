@@ -3,7 +3,7 @@ import mineflayerPathfinder from 'mineflayer-pathfinder';
 
 import {Bot} from '../bot.js';
 
-import {ActionStatus} from './action.js';
+import {ActionStatus} from './action_status.js';
 import {PredefinedAction} from './predefined_action.js';
 
 export class GoToAction extends PredefinedAction {

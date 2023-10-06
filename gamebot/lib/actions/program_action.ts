@@ -1,7 +1,8 @@
 import {Bot} from '../bot.js';
 import {Program} from '../programs/program.js';
 
-import {Action, ActionStatus} from './action.js';
+import {Action} from './action.js';
+import {ActionStatus} from './action_status.js';
 
 export class ProgramAction extends Action {
   constructor(bot: Bot, readonly program: Program) {

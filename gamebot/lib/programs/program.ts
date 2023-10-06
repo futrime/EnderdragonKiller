@@ -1,8 +1,4 @@
-export interface ActionInvocation {
-  action: string;
-  args: {name: string; value: boolean | number | string | null | object}[];
-}
-
+import {ActionInvocation} from '../action_invocation.js';
 export abstract class Program {
   abstract[Symbol.iterator](): Iterator<ActionInvocation>;
 }
