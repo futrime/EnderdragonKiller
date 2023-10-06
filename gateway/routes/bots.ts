@@ -9,6 +9,8 @@ import {Bot} from '../lib/bot';
 
 export const router = express.Router();
 
+let updated = new Date();
+
 router.route('/').get((req, res) => {
   try {
     const bots = req.app.locals.bots;
@@ -16,9 +18,13 @@ router.route('/').get((req, res) => {
     return res.status(200).send({
       apiVersion: '0.0.0',
       data: {
+        updated: updated.toISOString(),
         items: bots.map((bot: Bot) => {
           return {
-            username: bot.username,
+            ip: bot.ip,
+            name: bot.username,
+            port: bot.port,
+            updated: bot.updated.toISOString(),
           };
         }),
       },
@@ -40,19 +46,15 @@ router.route('/').get((req, res) => {
 
 router.route('/').post((req, res) => {
   try {
-    const bots = req.app.locals.bots;
+    const bots: Bot[] = req.app.locals.bots;
 
     const ip = req.ip;
     for (const bot of bots) {
-      if (bot.getIp() === ip) {
-        return res.status(409).send({
+      if (bot.ip === ip) {
+        return res.status(201).send({
           apiVersion: '0.0.0',
           data: {
-            username: bot.getUsername(),
-          },
-          error: {
-            code: 409,
-            message: `A bot with the same IP address (${ip}) already exists.`,
+            name: bot.username,
           },
         });
       }
@@ -100,12 +102,13 @@ router.route('/').post((req, res) => {
     }
 
     const port = responseJson.data.port;
-
     const username =
         bots.length === 0 ? 'Commander' : faker.person.firstName('female');
+    const currentTime = new Date();
 
-    const bot = new Bot(ip, port, username);
+    const bot = new Bot(ip, port, username, currentTime);
     bots.push(bot);
+    updated = currentTime;
 
     // HTTP 201 Created requires a Location header.
 
@@ -117,7 +120,7 @@ router.route('/').post((req, res) => {
         .send({
           apiVersion: '0.0.0',
           data: {
-            username: bot.username,
+            name: bot.username,
           },
         });
 
