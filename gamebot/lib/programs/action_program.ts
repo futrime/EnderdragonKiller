@@ -4,7 +4,8 @@ import {Program} from './program.js';
 
 export class ActionProgram extends Program {
   constructor(public readonly action: string, public readonly args: {
-    name: string; value: boolean | number | string | null | object
+    name: string,
+    value: unknown
   }[]) {
     super();
   }
