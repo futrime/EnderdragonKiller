@@ -1,4 +1,4 @@
-import {ActionInvocation, Program} from './program';
+import {ActionInvocation, Program} from './program.js';
 
 export class LoopProgram extends Program {
   constructor(public readonly program: Program, public readonly count: number) {

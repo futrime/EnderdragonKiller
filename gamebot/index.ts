@@ -5,9 +5,11 @@ import consola from 'consola';
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
+import fetch from 'node-fetch';
 import process from 'process';
 
-import {Bot} from './lib/bot';
+import {Bot} from './lib/bot.js';
+import {router as routerBotsStatus} from './routes/bots/status.js';
 
 main().catch((error) => {
   consola.error(`process exited with error: ${error.message}`);
@@ -85,12 +87,9 @@ async function registerBot(
                 gateway_port}/api/bots: ${error.message}`);
           });
 
-  if ([201, 409].includes(response.status) === false) {
+  if (response.status !== 201) {
     throw new Error(`failed to fetch http://${gateway_host}:${
         gateway_port}/api/bots:  ${response.status} ${response.statusText}`);
-  }
-  if (response.status === 409) {
-    consola.warn('bot already registered, restart gateway if necessary');
   }
 
   const responseJson = await response.json().catch((error) => {
@@ -101,25 +100,14 @@ async function registerBot(
   const SCHEMA = {
     'type': 'object',
     'properties': {
-      'apiVersion': {
-        'type': 'string',
-      },
+      'apiVersion': {'type': 'string'},
       'data': {
         'type': 'object',
-        'properties': {
-          'username': {
-            'type': 'string',
-          },
-        },
-        'required': [
-          'username',
-        ],
+        'properties': {'name': {'type': 'string'}},
+        'required': ['name']
       }
     },
-    'required': [
-      'apiVersion',
-      'data',
-    ],
+    'required': ['apiVersion', 'data']
   };
   const ajv = new Ajv();
   const validate = ajv.compile(SCHEMA);
@@ -129,8 +117,15 @@ async function registerBot(
         gateway_port}/api/bots: ${ajv.errorsText(validate.errors)}`);
   }
 
+  const parsedResponse = responseJson as {
+    apiVersion: string,
+    data: {
+      name: string,
+    },
+  };
+
   return {
-    username: responseJson.data.username,
+    username: parsedResponse.data.name,
   };
 }
 
@@ -146,6 +141,7 @@ async function setupExpress(
                   .use(morgan('tiny'))
                   .use(cors())
                   .use(express.raw({type: '*/*'}))
+                  .use(`/api/bots/${bot.username}/status`, routerBotsStatus)
                   .use((_, res) => {
                     return res.status(404).send({
                       apiVersion: '0.0.0',

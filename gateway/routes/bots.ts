@@ -5,7 +5,7 @@ import consola from 'consola';
 import express, {RequestHandler} from 'express';
 import path from 'path';
 
-import {Bot} from '../lib/bot';
+import {Bot} from '../lib/bot.js';
 
 export const router = express.Router();
 

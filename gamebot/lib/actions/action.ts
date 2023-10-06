@@ -1,6 +1,6 @@
 import {EventEmitter} from 'stream';
 
-import {Bot} from '../bot';
+import {Bot} from '../bot.js';
 
 export enum ActionStatus {
   STOPPED,

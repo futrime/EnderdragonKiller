@@ -7,8 +7,8 @@ import express from 'express';
 import morgan from 'morgan';
 import process from 'process';
 
-import {Bot} from './lib/bot';
-import {router as routerApiBots} from './routes/bots';
+import {Bot} from './lib/bot.js';
+import {router as routerApiBots} from './routes/bots.js';
 
 main().catch((error) => {
   consola.error(`process exited with error: ${error.message}`);

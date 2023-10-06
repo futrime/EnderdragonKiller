@@ -15,7 +15,9 @@ export class Bot {
    * @param username The username.
    * @param version The Minecraft version.
    */
-  constructor(host: string, port: number, username: string, version: string) {
+  constructor(
+      readonly host: string, readonly port: number, readonly username: string,
+      readonly version: string) {
     this.wrappedMineflayerBot =
         this.createMineflayerBot(host, port, username, version);
     this.mcdata = minecraftData(version);

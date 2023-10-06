@@ -1,10 +1,10 @@
 import consola from 'consola';
 import mineflayerPathfinder from 'mineflayer-pathfinder';
 
-import {Bot} from '../bot';
+import {Bot} from '../bot.js';
 
-import {ActionStatus} from './action';
-import {PredefinedAction} from './predefined_action';
+import {ActionStatus} from './action.js';
+import {PredefinedAction} from './predefined_action.js';
 
 export class GoToAction extends PredefinedAction {
   constructor(
