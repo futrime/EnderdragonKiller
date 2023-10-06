@@ -49,11 +49,11 @@ router.route('/').post((req, res) => {
                 'type': 'object',
                 'properties': {
                   'name': {'type': 'string'},
-                  'path': {'type': 'string'},
-                  'type': {'type': 'string'},
-                  'description': {'type': 'string'}
+                  'description': {'type': 'string'},
+                  'placeholder': {'type': 'string'},
+                  'type': {'type': 'string'}
                 },
-                'required': ['name', 'path', 'type', 'description']
+                'required': ['name', 'placeholder', 'type', 'description']
               }
             }
           },
@@ -82,7 +82,7 @@ router.route('/').post((req, res) => {
         description: string,
         params: {
           name: string,
-          path: string,
+          placeholder: string,
           type: string,
           description: string,
         }[],

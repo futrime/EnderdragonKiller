@@ -215,7 +215,6 @@ function itemToJson(item: Item): SerializedItem {
 }
 
 function playerToJson(player: Player): SerializedPlayer {
-  // TODO: Implement
   return {
     username: player.username,
   };
