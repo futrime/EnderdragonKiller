@@ -2,7 +2,7 @@
   "name": "edk-gamebot",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.ts",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
