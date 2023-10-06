@@ -10,7 +10,9 @@ export abstract class Action {
   protected readonly bot: Bot;
   protected wrappedStatus: ActionStatus = ActionStatus.STOPPED;
 
-  constructor(bot: Bot, readonly name: string) {
+  constructor(
+      bot: Bot, readonly name: string, readonly description: string,
+      readonly created: Date) {
     this.bot = bot;
   }
 

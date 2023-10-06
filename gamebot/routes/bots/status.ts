@@ -9,9 +9,9 @@ export const router = express.Router();
 
 router.route('/').get((req, res) => {
   try {
-    const bot: Bot = req.app.locals.bot;
-
     const currentTime = new Date();
+
+    const bot: Bot = req.app.locals.bot;
 
     return res.status(200).send({
       apiVersion: '0.0.0',

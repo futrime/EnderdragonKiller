@@ -3,12 +3,18 @@ import assert from 'assert';
 import consola from 'consola';
 import express from 'express';
 
+import {ProgramAction} from '../../lib/actions/program_action.js';
 import {Bot} from '../../lib/bot.js';
+import {createProgram} from '../../lib/programs/program_creation.js';
 
 export const router = express.Router();
 
+let updated = new Date();
+
 router.route('/').post((req, res) => {
   try {
+    const currentTime = new Date();
+
     const bot: Bot = req.app.locals.bot;
 
     let responseJson: unknown;
@@ -80,15 +86,21 @@ router.route('/').post((req, res) => {
           type: string,
           description: string,
         }[],
-        program: object,
+        program: unknown,
       },
     };
 
-    // TODO: Create a new program from the data.
+    const program = createProgram(data.data.program);
 
-    // TODO: Create an action.
+    const action = new ProgramAction(
+        bot, data.data.name, data.data.description, currentTime,
+        program);  // TODO: params
 
-    // TODO: Register the action with the bot.
+    bot.addOrUpdateAction(action);
+
+    updated = currentTime;
+
+    return res.status(201).end();
 
   } catch (error) {
     assert(error instanceof Error);
@@ -103,3 +115,38 @@ router.route('/').post((req, res) => {
     });
   }
 });
+
+router.route('/').get((req, res) => {
+  try {
+    const bot: Bot = req.app.locals.bot;
+
+    const actions = bot.getAllActions();
+
+    return res.status(200).send({
+      apiVersion: '0.0.0',
+      data: {
+        updated: updated.toISOString(),
+        items: actions.map((action) => {
+          return {
+            name: action.name,
+            description: action.description,
+            // TODO: params
+            updated: action.created,
+          };
+        }),
+      }
+    });
+
+  } catch (error) {
+    assert(error instanceof Error);
+
+    consola.error(`Error: ${error.message}`);
+    return res.status(500).send({
+      apiVersion: '0.0.0',
+      error: {
+        code: 500,
+        message: `Internal server error occured.`,
+      },
+    });
+  }
+})

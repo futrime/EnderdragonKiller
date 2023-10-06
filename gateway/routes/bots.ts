@@ -46,6 +46,8 @@ router.route('/').get((req, res) => {
 
 router.route('/').post((req, res) => {
   try {
+    const currentTime = new Date();
+
     const bots: Bot[] = req.app.locals.bots;
 
     const ip = req.ip;
@@ -104,7 +106,6 @@ router.route('/').post((req, res) => {
     const port = responseJson.data.port;
     const username =
         bots.length === 0 ? 'Commander' : faker.person.firstName('female');
-    const currentTime = new Date();
 
     const bot = new Bot(ip, port, username, currentTime);
     bots.push(bot);

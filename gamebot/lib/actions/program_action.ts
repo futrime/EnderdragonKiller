@@ -5,8 +5,10 @@ import {Action} from './action.js';
 import {ActionStatus} from './action_status.js';
 
 export class ProgramAction extends Action {
-  constructor(bot: Bot, name: string, readonly program: Program) {
-    super(bot, name);
+  constructor(
+      bot: Bot, name: string, description: string, created: Date,
+      readonly program: Program) {
+    super(bot, name, description, created);
   }
 
   override async start() {
