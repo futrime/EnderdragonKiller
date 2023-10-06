@@ -8,8 +8,9 @@ import {PredefinedAction} from './predefined_action.js';
 
 export class GoToAction extends PredefinedAction {
   constructor(
-      bot: Bot, readonly x: number, readonly y: number, readonly z: number) {
-    super(bot);
+      bot: Bot, name: string, readonly x: number, readonly y: number,
+      readonly z: number) {
+    super(bot, name);
   }
 
   override async start() {

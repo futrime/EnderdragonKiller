@@ -3,7 +3,7 @@ import consola from 'consola';
 import express from 'express';
 
 import {Bot} from '../../lib/bot.js';
-import {createMineflayerBotStatus} from '../../lib/mineflayer_bot_status.js';
+import {createMineflayerBotStatus} from '../../lib/mineflayer_serialization.js';
 
 export const router = express.Router();
 
