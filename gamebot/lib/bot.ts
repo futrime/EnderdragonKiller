@@ -149,7 +149,7 @@ export class Bot {
       consola.error(`bot error: ${error.message}`);
     });
     bot.on('login', () => {
-      consola.success('bot logged in');
+      consola.log('bot logged in');
     });
 
     return bot;

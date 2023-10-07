@@ -16,6 +16,7 @@ export abstract class ActionInstance {
       args: ReadonlyArray<Arg>, protected readonly bot: Bot) {
     this.args = {};
 
+    // Check duplicate arguments
     for (const arg of args) {
       if (arg.name in this.args) {
         throw new Error(`duplicate argument ${arg.name}`);

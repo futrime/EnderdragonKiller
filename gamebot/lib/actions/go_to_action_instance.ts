@@ -36,6 +36,13 @@ export class GoToActionInstance extends PredefinedActionInstance {
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
 
+    // The number of arguments must match the number of parameters.
+    if (Object.entries(PARAMETERS).length !==
+        Object.entries(this.args).length) {
+      throw new Error('wrong number of arguments');
+    }
+
+    // Every parameter must be filled.
     for (const parameter of Object.values(PARAMETERS)) {
       if (!(parameter.name in this.args)) {
         throw new Error(`missing argument ${parameter.name}`);
@@ -133,10 +140,25 @@ export class GoToActionInstance extends PredefinedActionInstance {
             return;
           }
 
+          let reason: string;
+          switch (result.status) {
+            case 'noPath':
+              reason = 'cannot find a path to the goal';
+              break;
+
+            case 'timeout':
+              reason = 'take too long to find a path to the goal';
+              break;
+
+            default:
+              // This should never happen.
+              return;
+          }
+
           await this.stopPathfinding();
 
           this.wrappedState = ActionInstanceState.FAILED;
-          this.eventEmitter.emit('failed', this);
+          this.eventEmitter.emit('fail', this, reason);
 
           consola.log(`${this.actionName}#${this.id} failed`);
         });

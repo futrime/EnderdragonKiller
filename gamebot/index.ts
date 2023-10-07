@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import fetch from 'node-fetch';
 import process from 'process';
 
+import {GoToAction} from './lib/actions/go_to_action.js';
 import {Bot} from './lib/bot.js';
 import {router as routerBotsObserve} from './routes/bots/observe.js';
 import {router as routerBotsStatus} from './routes/bots/status.js';
@@ -51,19 +52,15 @@ async function main() {
       mcserver_version,
   );
 
+  // Set up predefined actions.
+  setupPredefinedActions(bot);
+
   // Set up express.
   await setupExpress(bot, listen_port).catch((error) => {
     throw new Error(`failed to set up express: ${error.message}`);
   });
 }
 
-/**
- * Registers a bot on the gateway.
- * @param listen_port The port of the gamebot.
- * @param gateway_host The host of the gateway.
- * @param gateway_port The port of the gateway.
- * @returns Some information about the bot.
- */
 async function registerBot(
     listen_port: number, gateway_host: string,
     gateway_port: number): Promise<{username: string}> {
@@ -130,12 +127,6 @@ async function registerBot(
   };
 }
 
-/**
- * Sets up express.
- * @param bot The bot.
- * @param listen_port The port of the gamebot.
- * @returns The express app.
- */
 async function setupExpress(
     bot: Bot, listen_port: number): Promise<express.Express> {
   const app = express()
@@ -161,4 +152,8 @@ async function setupExpress(
   });
 
   return app;
+}
+
+function setupPredefinedActions(bot: Bot) {
+  bot.addOrUpdateAction(new GoToAction());
 }
