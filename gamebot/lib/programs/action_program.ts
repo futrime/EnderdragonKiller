@@ -1,5 +1,4 @@
-import {ActionInvocation} from '../action_invocation.js';
-
+import {ActionInvocation} from './action_invocation.js';
 import {Program} from './program.js';
 
 export class ActionProgram extends Program {

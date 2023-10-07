@@ -3,7 +3,7 @@ import assert from 'assert';
 import consola from 'consola';
 import express from 'express';
 
-import {ProgramAction} from '../../lib/actions/program_action.js';
+import {ProgramAction} from '../../lib/actions_legacy/program_action.js';
 import {Bot} from '../../lib/bot.js';
 import {createProgram} from '../../lib/programs/program_creation.js';
 

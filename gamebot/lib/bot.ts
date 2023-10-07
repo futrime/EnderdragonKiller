@@ -5,7 +5,7 @@ import collectblock from 'mineflayer-collectblock';
 import pathfinder from 'mineflayer-pathfinder';
 import pvp from 'mineflayer-pvp';
 
-import {Action} from './actions/action.js';
+import {Action} from './actions_legacy/action.js';
 
 export class Bot {
   readonly mcdata: minecraftData.IndexedData;
