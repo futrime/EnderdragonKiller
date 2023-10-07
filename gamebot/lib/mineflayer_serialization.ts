@@ -6,89 +6,96 @@ import {Item} from 'prismarine-item';
 import {Vec3} from 'vec3';
 
 export interface SerializedBot {
-  username: string;
-  version: string;
-  entity: SerializedEntity;
-  entities: {[id: string]: SerializedEntity};
-  game: SerializedGameState;
-  player: SerializedPlayer;
-  players: {[username: string]: SerializedPlayer};
-  isRaining: boolean;
-  experience: {level: number; points: number; progress: number;};
-  health: number;
-  food: number;
-  foodSaturation: number;
-  oxygenLevel: number;
-  time: SerializedTime;
-  quickBarSlot: number;
-  isSleeping: boolean;
-  biome?: SerializedBiome;
-  blocksNearby: SerializedBlock[];
+  readonly username: string;
+  readonly version: string;
+  readonly entity: SerializedEntity;
+  readonly entities: Readonly<Record<string, SerializedEntity>>;
+  readonly game: SerializedGameState;
+  readonly player: SerializedPlayer;
+  readonly players: Readonly<Record<string, SerializedPlayer>>;
+  readonly isRaining: boolean;
+  readonly experience: {
+    readonly level: number; readonly points: number; readonly progress: number;
+  };
+  readonly health: number;
+  readonly food: number;
+  readonly foodSaturation: number;
+  readonly oxygenLevel: number;
+  readonly time: SerializedTime;
+  readonly quickBarSlot: number;
+  readonly isSleeping: boolean;
+  readonly biome?: SerializedBiome;
+  readonly blocksNearby: ReadonlyArray<SerializedBlock>;
 }
 
 export interface SerializedBiome {
-  name: string;
-  displayName?: string;
-  rainfall: number;
-  temperature: number;
+  readonly name: string;
+  readonly displayName?: string;
+  readonly rainfall: number;
+  readonly temperature: number;
 }
 
 export interface SerializedBlock {
-  biome: SerializedBiome;
-  position: Vec3;
-  name: string;
-  displayName: string;
-  hardness: number;
-  diggable: boolean;
+  readonly name: string;
+  readonly displayName: string;
+}
+
+export interface SerializedBlockDetailed extends SerializedBlock {
+  readonly biome: SerializedBiome;
+  readonly position: Vec3;
+  readonly name: string;
+  readonly displayName: string;
+  readonly hardness: number;
+  readonly diggable: boolean;
 }
 
 export interface SerializedEffect {
-  id: number;
-  amplifier: number;
-  duration: number;
+  readonly id: number;
+  readonly amplifier: number;
+  readonly duration: number;
 }
 
 export interface SerializedEntity {
-  id: number;
-  displayName?: string;
-  name?: string;
-  position: Vec3;
-  velocity: Vec3;
-  yaw: number;
-  pitch: number;
-  height: number;
-  width: number;
-  onGround: boolean;
-  equipment: SerializedItem[];
-  health?: number;
-  food?: number;
-  foodSaturation?: number;
-  effects: SerializedEffect[];
+  readonly id: number;
+  readonly displayName?: string;
+  readonly name?: string;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  readonly yaw: number;
+  readonly pitch: number;
+  readonly height: number;
+  readonly width: number;
+  readonly onGround: boolean;
+  readonly equipment: ReadonlyArray<SerializedItem>;
+  readonly health?: number;
+  readonly food?: number;
+  readonly foodSaturation?: number;
+  readonly effects: ReadonlyArray<SerializedEffect>;
 }
 
 export interface SerializedGameState {
-  dimension: string;
+  readonly dimension: string;
 }
 
 export interface SerializedItem {
-  count: number;
-  name: string;
-  maxDurability: number;
-  durabilityUsed: number;
-  enchants: {name: string, lvl: number}[];
+  readonly count: number;
+  readonly name: string;
+  readonly maxDurability: number;
+  readonly durabilityUsed: number;
+  readonly enchants: ReadonlyArray<{name: string; lvl: number;}>;
 }
 
 export interface SerializedPlayer {
-  username: string;
+  readonly username: string;
 }
 
 export interface SerializedTime {
-  time: number;
-  timeOfDay: number;
-  day: number;
-  isDay: boolean;
-  moonPhase: number;
-  age: number;
+  readonly time: number;
+  readonly timeOfDay: number;
+  readonly day: number;
+  readonly isDay: boolean;
+  readonly moonPhase: number;
+  readonly age: number;
 }
 
 export function createSerializedBot(bot: Bot): SerializedBot {
@@ -105,7 +112,7 @@ function biomeToJson(biome: Biome): SerializedBiome {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function blockToJson(block: Block): SerializedBlock {
+function blockToJson(block: Block): SerializedBlockDetailed {
   return {
     biome: biomeToJson(block.biome),
     position: block.position,
@@ -147,7 +154,11 @@ function botToJson(bot: Bot): SerializedBot {
     })(),
     blocksNearby: (() => {
       const position = bot.entity.position;
-      const blockMap = new Map();
+      const blocks: Record < string, {
+        name: string;
+        displayName: string;
+      }
+      > = {};
 
       for (let x = -8; x <= 8; x++) {
         for (let y = -8; y <= 8; y++) {
@@ -155,16 +166,16 @@ function botToJson(bot: Bot): SerializedBot {
             const block = bot.blockAt(position.offset(x, y, z));
 
             if (block !== null) {
-              blockMap.set(block.name, {
+              blocks[block.name] = {
                 name: block.name,
                 displayName: block.displayName,
-              });
+              };
             }
           }
         }
       }
 
-      return Array.from(blockMap.values());
+      return Array.from(Object.values(blocks));
     })(),
   };
 }

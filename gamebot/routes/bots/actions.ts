@@ -120,7 +120,7 @@ router.route('/').get((req, res) => {
   try {
     const bot: Bot = req.app.locals.bot;
 
-    const actions = bot.getAllActions();
+    const actions = bot.getActions();
 
     return res.status(200).send({
       apiVersion: '0.0.0',

@@ -5,8 +5,10 @@ import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
 import {Parameter} from '../parameter.js';
 
-import {ActionInstance} from './action_instance.js';
 import {ActionInstanceState} from './action_instance_state.js';
+import {PredefinedActionInstance} from './predefined_action_instance.js';
+
+const ACTION_NAME = 'GoTo';
 
 const PARAMETERS: Record<string, Parameter> = {
   'x': {
@@ -26,13 +28,13 @@ const PARAMETERS: Record<string, Parameter> = {
   },
 };
 
-export class GoToActionInstance extends ActionInstance {
+export class GoToActionInstance extends PredefinedActionInstance {
   private readonly x: number;
   private readonly y: number;
   private readonly z: number;
 
-  constructor(id: number, args: ReadonlyArray<Arg>, bot: Bot) {
-    super(id, 'goTo', args, bot);
+  constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
+    super(id, ACTION_NAME, args, bot);
 
     for (const parameter of Object.values(PARAMETERS)) {
       if (!(parameter.name in this.args)) {
@@ -61,7 +63,7 @@ export class GoToActionInstance extends ActionInstance {
 
     this.wrappedState = ActionInstanceState.CANCELED;
     this.eventEmitter.emit('cancel', this);
-    consola.log(`GoTo#${this.id} canceled`);
+    consola.log(`${this.actionName}#${this.id} canceled`);
   }
 
   override async pause(): Promise<void> {
@@ -74,7 +76,7 @@ export class GoToActionInstance extends ActionInstance {
 
     this.wrappedState = ActionInstanceState.PAUSED;
     this.eventEmitter.emit('pause', this);
-    consola.log(`GoTo#${this.id} paused`);
+    consola.log(`${this.actionName}#${this.id} paused`);
   }
 
   override async resume(): Promise<void> {
@@ -87,7 +89,7 @@ export class GoToActionInstance extends ActionInstance {
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('resume', this);
-    consola.log(`GoTo#${this.id} resumed`);
+    consola.log(`${this.actionName}#${this.id} resumed`);
   }
 
   override async start(): Promise<void> {
@@ -100,7 +102,7 @@ export class GoToActionInstance extends ActionInstance {
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('start', this);
-    consola.log(`GoTo#${this.id} started`);
+    consola.log(`${this.actionName}#${this.id} started`);
   }
 
   private async startPathfinding(): Promise<void> {
@@ -118,7 +120,7 @@ export class GoToActionInstance extends ActionInstance {
       this.wrappedState = ActionInstanceState.SUCCEEDED;
       this.eventEmitter.emit('succeed', this);
 
-      consola.log(`GoTo#${this.id} succeeded`);
+      consola.log(`${this.actionName}#${this.id} succeeded`);
     });
     this.bot.mineflayerBot.once(
         'path_update', async (result: {status: string;}) => {
@@ -136,7 +138,7 @@ export class GoToActionInstance extends ActionInstance {
           this.wrappedState = ActionInstanceState.FAILED;
           this.eventEmitter.emit('failed', this);
 
-          consola.log(`GoTo#${this.id} failed`);
+          consola.log(`${this.actionName}#${this.id} failed`);
         });
   }
 

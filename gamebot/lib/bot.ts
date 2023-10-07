@@ -4,13 +4,17 @@ import mineflayer from 'mineflayer';
 import collectblock from 'mineflayer-collectblock';
 import pathfinder from 'mineflayer-pathfinder';
 import pvp from 'mineflayer-pvp';
+import {nanoid} from 'nanoid';
 
-import {Action} from './actions_legacy/action.js';
+import {Action} from './actions/action.js';
+import {ActionInstance} from './actions/action_instance.js';
+import {Arg} from './arg.js';
 
 export class Bot {
   readonly mcdata: minecraftData.IndexedData;
 
   private actions: Record<string, Action> = {};
+  private jobs: Record<string, ActionInstance> = {};
   private wrappedMineflayerBot: mineflayer.Bot;
 
   /**
@@ -39,8 +43,30 @@ export class Bot {
    * Adds or updates an action in the bot.
    * @param action The action to add or update.
    */
-  addOrUpdateAction(action: Action) {
+  addOrUpdateAction(action: Action): void {
     this.actions[action.name] = action;
+  }
+
+  /**
+   * Creates a job.
+   * @param action
+   * @param args
+   * @returns
+   */
+  createJob(actionName: string, args: ReadonlyArray<Arg>): string {
+    const id = nanoid();
+    if (id in this.jobs) {
+      throw new Error(`identical job id ${id} already exists`);
+    }
+
+    if (!(actionName in this.actions)) {
+      throw new Error(`action ${actionName} does not exist`);
+    }
+    const action = this.actions[actionName];
+
+    this.jobs[id] = action.instantiate(id, args, this);
+
+    return id;
   }
 
   /**
@@ -60,8 +86,29 @@ export class Bot {
    * Gets all actions from the bot.
    * @returns All actions.
    */
-  getAllActions(): Action[] {
+  getActions(): ReadonlyArray<Action> {
     return Object.values(this.actions);
+  }
+
+  /**
+   * Gets a job from the bot.
+   * @param id The id of the job.
+   * @returns The job.
+   */
+  getJob(id: string): ActionInstance {
+    if (!(id in this.jobs)) {
+      throw new Error(`job ${id} does not exist`);
+    }
+
+    return this.jobs[id];
+  }
+
+  /**
+   * Get all jobs from the bot.
+   * @returns All jobs.
+   */
+  getJobs(): ReadonlyArray<ActionInstance> {
+    return Object.values(this.jobs);
   }
 
   /**

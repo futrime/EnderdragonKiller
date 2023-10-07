@@ -1,4 +1,5 @@
 import {Arg} from '../arg.js';
+import {Bot} from '../bot.js';
 import {Parameter} from '../parameter.js';
 
 import {ActionInstance} from './action_instance.js';
@@ -20,5 +21,13 @@ export abstract class Action {
     }
   }
 
-  abstract instantiate(args: ReadonlyArray<Arg>): ActionInstance;
+  /**
+   * Instantiates an action instance.
+   * @param id The action instance ID.
+   * @param args The action instance arguments.
+   * @param bot The bot.
+   * @returns The action instance.
+   */
+  abstract instantiate(id: string, args: ReadonlyArray<Arg>, bot: Bot):
+      ActionInstance;
 }
