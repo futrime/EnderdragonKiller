@@ -31,6 +31,10 @@ export class Bot {
     return this.wrappedMineflayerBot;
   }
 
+  get name(): string {
+    return this.username;
+  }
+
   /**
    * Adds or updates an action in the bot.
    * @param action The action to add or update.

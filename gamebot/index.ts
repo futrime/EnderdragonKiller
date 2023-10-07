@@ -9,6 +9,7 @@ import fetch from 'node-fetch';
 import process from 'process';
 
 import {Bot} from './lib/bot.js';
+import {router as routerBotsObserve} from './routes/bots/observe.js';
 import {router as routerBotsStatus} from './routes/bots/status.js';
 
 main().catch((error) => {
@@ -141,7 +142,8 @@ async function setupExpress(
                   .use(morgan('tiny'))
                   .use(cors())
                   .use(express.raw({type: '*/*'}))
-                  .use(`/api/bots/${bot.username}/status`, routerBotsStatus)
+                  .use(`/api/bots/${bot.name}/observe`, routerBotsObserve)
+                  .use(`/api/bots/${bot.name}/status`, routerBotsStatus)
                   .use((_, res) => {
                     return res.status(404).send({
                       apiVersion: '0.0.0',

@@ -5,7 +5,7 @@ import {Effect, Entity} from 'prismarine-entity';
 import {Item} from 'prismarine-item';
 import {Vec3} from 'vec3';
 
-export interface SerializedMineflayerBot {
+export interface SerializedBot {
   username: string;
   version: string;
   entity: SerializedEntity;
@@ -91,7 +91,7 @@ export interface SerializedTime {
   age: number;
 }
 
-export function createMineflayerBotStatus(bot: Bot): SerializedMineflayerBot {
+export function createSerializedBot(bot: Bot): SerializedBot {
   return botToJson(bot);
 }
 
@@ -116,7 +116,7 @@ function blockToJson(block: Block): SerializedBlock {
   };
 }
 
-function botToJson(bot: Bot): SerializedMineflayerBot {
+function botToJson(bot: Bot): SerializedBot {
   return {
     username: bot.username,
     version: bot.version,

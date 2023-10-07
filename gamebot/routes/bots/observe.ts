@@ -2,13 +2,20 @@ import assert from 'assert';
 import consola from 'consola';
 import express from 'express';
 
+import {Bot} from '../../lib/bot.js';
+import {createSerializedBot} from '../../lib/mineflayer_serialization.js';
+
 export const router = express.Router();
 
 router.route('/').get((req, res) => {
   try {
+    const bot: Bot = req.app.locals.bot;
+
     return res.status(200).send({
       apiVersion: '0.0.0',
-      data: {},
+      data: {
+        bot: createSerializedBot(bot.mineflayerBot),
+      },
     });
 
   } catch (error) {
