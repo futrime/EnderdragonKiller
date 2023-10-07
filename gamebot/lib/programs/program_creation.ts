@@ -3,14 +3,18 @@ import Ajv from 'ajv';
 import {ActionProgram} from './action_program.js';
 import {LoopProgram} from './loop_program.js';
 import {Program} from './program.js';
-import {SequenceProgram} from './sequence_program';
+import {SequenceProgram} from './sequence_program.js';
 
 export function createProgram(json: unknown): Program {
   const SCHEMA = {
     'type': 'object',
-    'properties':
-        {'type': {'type': 'string', 'enum': ['action', 'loop', 'sequence']}},
-    'required': ['type']
+    'properties': {
+      'type': {
+        'type': 'string',
+        'enum': ['action', 'loop', 'sequence'],
+      },
+    },
+    'required': ['type'],
   };
 
   if (new Ajv().validate(SCHEMA, json) === false) {
@@ -41,19 +45,29 @@ function createActionProgram(json: unknown): ActionProgram {
       'action': {
         'type': 'object',
         'properties': {
-          'name': {'type': 'string'},
+          'name': {
+            'type': 'string',
+          },
           'args': {
             'type': 'array',
             'items': {
               'type': 'object',
-              'properties': {'name': {'type': 'string'}, 'value': {}},
+              'properties': {
+                'name': {
+                  'type': 'string',
+                },
+                'value': {},
+              },
               'required': ['name', 'value']
             }
           }
         },
         'required': ['name', 'args']
       },
-      'type': {'type': 'string', 'enum': ['action']}
+      'type': {
+        'type': 'string',
+        'enum': ['action'],
+      }
     },
     'required': ['type', 'action']
   };
@@ -76,11 +90,20 @@ function createLoopProgram(json: unknown): LoopProgram {
   const SCHEMA = {
     'type': 'object',
     'properties': {
-      'type': {'type': 'string', 'enum': ['loop']},
+      'type': {
+        'type': 'string',
+        'enum': ['loop'],
+      },
       'loop': {
         'type': 'object',
-        'properties':
-            {'count': {'type': 'integer'}, 'program': {'type': 'object'}},
+        'properties': {
+          'count': {
+            'type': 'integer',
+          },
+          'program': {
+            'type': 'object',
+          },
+        },
         'required': ['count', 'program']
       }
     },
@@ -106,11 +129,19 @@ function createSequenceProgram(json: unknown): SequenceProgram {
   const SCHEMA = {
     'type': 'object',
     'properties': {
-      'type': {'type': 'string', 'enum': ['sequence']},
+      'type': {
+        'type': 'string',
+        'enum': ['sequence'],
+      },
       'sequence': {
         'type': 'object',
-        'properties': {'items': {'type': 'array', 'items': {'type': 'object'}}},
-        'required': ['items']
+        'properties': {
+          'items': {
+            'type': 'array',
+            'items': {'type': 'object'},
+          },
+        },
+        'required': ['items'],
       }
     },
     'required': ['type', 'sequence']
