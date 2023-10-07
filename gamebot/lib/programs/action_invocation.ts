@@ -1,4 +1,4 @@
-import {Arg} from '../utils.js';
+import {Arg} from '../arg.js';
 
 export interface ActionInvocation {
   action: string;
