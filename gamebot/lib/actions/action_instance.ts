@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-import {Arg} from '../arg.js'
+import {Arg, isArgArrayDuplicate} from '../arg.js'
 import {Bot} from '../bot.js';
 
 import {ActionInstanceState} from './action_instance_state.js';
@@ -14,14 +14,12 @@ export abstract class ActionInstance {
   constructor(
       readonly id: string, readonly actionName: string,
       args: ReadonlyArray<Arg>, protected readonly bot: Bot) {
+    if (isArgArrayDuplicate(args)) {
+      throw new Error('duplicate argument');
+    }
+
     this.args = {};
-
-    // Check duplicate arguments
     for (const arg of args) {
-      if (arg.name in this.args) {
-        throw new Error(`duplicate argument ${arg.name}`);
-      }
-
       this.args[arg.name] = arg;
     }
   }

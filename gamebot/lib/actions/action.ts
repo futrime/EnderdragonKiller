@@ -1,6 +1,6 @@
 import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
-import {Parameter} from '../parameter.js';
+import {isParameterArrayDuplicate, Parameter} from '../parameter.js';
 
 import {ActionInstance} from './action_instance.js';
 
@@ -10,13 +10,12 @@ export abstract class Action {
   constructor(
       readonly name: string, readonly description: string,
       parameters: ReadonlyArray<Parameter>) {
+    if (isParameterArrayDuplicate(parameters)) {
+      throw new Error('duplicate parameter');
+    }
+
     this.parameters = {};
-
     for (const parameter of parameters) {
-      if (parameter.name in this.parameters) {
-        throw new Error(`duplicate parameter ${parameter.name}`);
-      }
-
       this.parameters[parameter.name] = parameter;
     }
   }

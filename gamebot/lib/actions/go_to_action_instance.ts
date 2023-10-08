@@ -3,30 +3,30 @@ import pathfinderModule from 'mineflayer-pathfinder';
 
 import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
-import {Parameter} from '../parameter.js';
+import {doArgArrayMatchParameterArray, Parameter} from '../parameter.js';
 
 import {ActionInstanceState} from './action_instance_state.js';
 import {PredefinedActionInstance} from './predefined_action_instance.js';
 
 const ACTION_NAME = 'GoTo';
 
-const PARAMETERS: Record<string, Parameter> = {
-  'x': {
+const PARAMETERS: ReadonlyArray<Parameter> = [
+  {
     name: 'x',
     description: 'X coordinate',
     type: 'number',
   },
-  'y': {
+  {
     name: 'y',
     description: 'Y coordinate',
     type: 'number',
   },
-  'z': {
+  {
     name: 'z',
     description: 'Z coordinate',
     type: 'number',
   },
-};
+];
 
 export class GoToActionInstance extends PredefinedActionInstance {
   private readonly x: number;
@@ -36,22 +36,9 @@ export class GoToActionInstance extends PredefinedActionInstance {
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
 
-    // The number of arguments must match the number of parameters.
-    if (Object.entries(PARAMETERS).length !==
-        Object.entries(this.args).length) {
-      throw new Error('wrong number of arguments');
-    }
-
-    // Every parameter must be filled.
-    for (const parameter of Object.values(PARAMETERS)) {
-      if (!(parameter.name in this.args)) {
-        throw new Error(`missing argument ${parameter.name}`);
-      }
-
-      // Check types
-      if (parameter.type !== typeof this.args[parameter.name].value) {
-        throw new Error(`argument ${parameter.name} has wrong type`);
-      }
+    if (doArgArrayMatchParameterArray(args, Object.values(PARAMETERS)) ===
+        false) {
+      throw new Error('args do not match parameters');
     }
 
     this.x = this.args['x'].value as number;

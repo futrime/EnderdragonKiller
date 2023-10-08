@@ -3,6 +3,8 @@ import consola from 'consola';
 
 import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
+import {doArgArrayMatchParameterArray, isParameterArrayDuplicate} from '../parameter.js';
+import {ActionInvocation} from '../programs/action_invocation.js';
 import {Program} from '../programs/program.js';
 
 import {ActionInstance} from './action_instance.js';
@@ -11,8 +13,8 @@ import {ParameterWithVariable} from './parameter_with_variable.js';
 
 export class ProgramActionInstance extends ActionInstance {
   private currentActionInstance?: ActionInstance = undefined;
-  private isCanceled: boolean = false;
-  private isPaused: boolean = false;
+  private shouldCancel: boolean = false;
+  private shouldPause: boolean = false;
   private readonly variables: Record<string, unknown> = {};
 
   constructor(
@@ -21,31 +23,12 @@ export class ProgramActionInstance extends ActionInstance {
       private readonly program: Program) {
     super(id, actionName, args, bot);
 
-    // Check duplicate parameters
-    const parameterNames = new Set<string>();
-    for (const parameter of parameters) {
-      if (parameterNames.has(parameter.name)) {
-        throw new Error(`duplicate parameter ${parameter.name}`);
-      }
-      parameterNames.add(parameter.name);
+    if (isParameterArrayDuplicate(parameters) === false) {
+      throw new Error('parameters duplicate');
     }
 
-    // The number of arguments must match the number of parameters.
-    if (Object.entries(parameters).length !==
-        Object.entries(this.args).length) {
-      throw new Error('wrong number of arguments');
-    }
-
-    // Every parameter must match an argument.
-    for (const parameter of Object.values(parameters)) {
-      if (!(parameter.name in this.args)) {
-        throw new Error(`missing argument ${parameter.name}`);
-      }
-
-      // Check types
-      if (parameter.type !== typeof this.args[parameter.name].value) {
-        throw new Error(`argument ${parameter.name} has wrong type`);
-      }
+    if (doArgArrayMatchParameterArray(args, parameters) === false) {
+      throw new Error('args do not match parameters');
     }
 
     // Set variables
@@ -66,8 +49,12 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot cancel an action instance in state ${this.wrappedState}`);
     }
 
-    this.isCanceled = true;
-    await this.currentActionInstance?.cancel();
+    this.shouldCancel = true;
+    if (this.currentActionInstance !== undefined &&
+        (this.currentActionInstance.state === ActionInstanceState.RUNNING ||
+         this.currentActionInstance.state === ActionInstanceState.PAUSED)) {
+      await this.currentActionInstance.cancel();
+    }
 
     // Wait till the current action instance becomes undefined.
     await (() => {
@@ -77,7 +64,7 @@ export class ProgramActionInstance extends ActionInstance {
             clearInterval(interval);
             resolve();
           }
-        }, 100);
+        }, 10);
       });
     })();
 
@@ -92,8 +79,11 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot pause an action instance in state ${this.wrappedState}`);
     }
 
-    this.isPaused = true;
-    await this.currentActionInstance?.pause();
+    this.shouldPause = true;
+    if (this.currentActionInstance !== undefined &&
+        this.currentActionInstance.state === ActionInstanceState.RUNNING) {
+      await this.currentActionInstance.pause();
+    }
 
     this.wrappedState = ActionInstanceState.PAUSED;
     this.eventEmitter.emit('pause', this);
@@ -106,8 +96,11 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot resume an action instance in state ${this.wrappedState}`);
     }
 
-    this.isPaused = false;
-    await this.currentActionInstance?.resume();
+    this.shouldPause = false;
+    if (this.currentActionInstance !== undefined &&
+        this.currentActionInstance.state === ActionInstanceState.PAUSED) {
+      await this.currentActionInstance.resume();
+    }
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('resume', this);
@@ -120,78 +113,20 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot start an action instance in state ${this.wrappedState}`);
     }
 
-    await this.startEvaluation();
+    this.evaluate().catch(this.handleEvaluationError.bind(this));
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('start', this);
     consola.log(`${this.actionName}#${this.id} started`);
   }
 
-  // TODO: simplify this function.
-  private async evaluate() {
-    for (const actionInvocation of this.program) {
-      // Check if the action instance has been canceled.
-      if (this.isCanceled === true) {
-        return;
-      }
+  private createActionInstanceFromActionInvocation(
+      actionInvocation: ActionInvocation): ActionInstance {
+    const action = this.bot.getAction(actionInvocation.action);
 
-      // Check if the action instance has been paused.
-      if (this.isPaused === true) {
-        await this.waitTillResume();
-      }
-
-      const action = this.bot.getAction(actionInvocation.action);
-      const args = this.replaceVariables(actionInvocation.args);
-      const actionInstance = action.instantiate('', args, this.bot);
-
-      if (this.currentActionInstance !== undefined) {
-        // This should never happen.
-        throw new Error(`trying to start ${action.name} while ${
-            this.currentActionInstance.actionName} is running`);
-      }
-      this.currentActionInstance = actionInstance;
-
-      await actionInstance.start();
-      await this.waitTillActionInstanceEnd(actionInstance);
-
-      this.currentActionInstance = undefined;
-    }
-
-    // Now, isCanceled is false.
-
-    this.wrappedState = ActionInstanceState.SUCCEEDED;
-    this.eventEmitter.emit('succeed', this);
-    consola.log(`${this.actionName}#${this.id} succeeded`);
-  }
-
-  private async handleEvaluationError(error: Error) {
-    try {
-      await this.currentActionInstance?.cancel();
-
-    } catch (error) {
-      assert(error instanceof Error);
-
-      consola.fatal(
-          `failed to cancel ${this.currentActionInstance?.actionName}#${
-              this.currentActionInstance?.id}: ${
-              error.message}. The program is malfunctioning`);
-
-      // Exit the process.
-      process.exit(1);
-    }
-
-    this.wrappedState = ActionInstanceState.FAILED;
-    this.eventEmitter.emit('fail', this, error.message);
-    consola.error(`${this.actionName}#${this.id} failed: ${error.message}`);
-  }
-
-  private replaceVariables(args: ReadonlyArray<Arg>) {
-    return args.map((arg) => {
+    const args = actionInvocation.args.map((arg) => {
       if (typeof arg.value === 'string' && arg.value.startsWith('$')) {
         const value = this.variables[arg.value];
-        if (value === undefined) {
-          throw new Error(`variable ${arg.value} is undefined`);
-        }
 
         return {
           ...arg,
@@ -201,10 +136,63 @@ export class ProgramActionInstance extends ActionInstance {
 
       return arg;
     });
+
+    const actionInstance = action.instantiate('', args, this.bot);
+
+    return actionInstance;
   }
 
-  private async startEvaluation() {
-    this.evaluate().catch(this.handleEvaluationError.bind(this));
+  private async evaluate() {
+    for (const actionInvocation of this.program) {
+      const actionInstance =
+          this.createActionInstanceFromActionInvocation(actionInvocation);
+
+      assert(this.currentActionInstance === undefined);
+      this.currentActionInstance = actionInstance;
+
+      await actionInstance.start();
+
+      // Should check whenever other coroutine may cancel this action instance.
+      if (this.shouldCancel) {
+        return;
+      }
+
+      if (this.shouldPause) {
+        await this.waitTillShouldPauseBecomesFalse();
+      }
+
+      await this.waitTillActionInstanceEnd(actionInstance);
+
+      // Should check whenever other coroutine may cancel this action instance.
+      if (this.shouldCancel) {
+        return;
+      }
+
+      if (this.shouldPause) {
+        await this.waitTillShouldPauseBecomesFalse();
+      }
+
+      this.currentActionInstance = undefined;
+    }
+
+    assert(this.shouldCancel === false);
+
+    this.wrappedState = ActionInstanceState.SUCCEEDED;
+    this.eventEmitter.emit('succeed', this);
+    consola.log(`${this.actionName}#${this.id} succeeded`);
+  }
+
+  private async handleEvaluationError(error: Error) {
+    if (this.currentActionInstance !== undefined &&
+        (this.currentActionInstance.state === ActionInstanceState.RUNNING ||
+         this.currentActionInstance.state === ActionInstanceState.PAUSED)) {
+      // Ignore error
+      await this.currentActionInstance.cancel().catch(() => {});
+    }
+
+    this.wrappedState = ActionInstanceState.FAILED;
+    this.eventEmitter.emit('fail', this, error.message);
+    consola.error(`${this.actionName}#${this.id} failed: ${error.message}`);
   }
 
   private async waitTillActionInstanceEnd(actionInstance: ActionInstance) {
@@ -220,10 +208,10 @@ export class ProgramActionInstance extends ActionInstance {
     });
   }
 
-  private async waitTillResume() {
+  private async waitTillShouldPauseBecomesFalse() {
     return new Promise<void>((resolve) => {
       const interval = setInterval(() => {
-        if (this.isPaused === false) {
+        if (this.shouldPause === false) {
           clearInterval(interval);
           resolve();
         }

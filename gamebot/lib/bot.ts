@@ -53,9 +53,9 @@ export class Bot {
 
   /**
    * Creates a job.
-   * @param action
-   * @param args
-   * @returns
+   * @param action The action to create a job from.
+   * @param args The arguments to pass to the action.
+   * @returns The id of the job.
    */
   createJob(actionName: string, args: ReadonlyArray<Arg>): string {
     const id = nanoid();
