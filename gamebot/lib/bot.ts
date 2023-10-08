@@ -135,6 +135,20 @@ export class Bot {
   }
 
   /**
+   * Checks if any job is running.
+   * @returns True if any job is running.
+   */
+  isRunningAnyJob(): boolean {
+    for (const job of Object.values(this.jobs)) {
+      if (job.state === ActionInstanceState.RUNNING) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Pauses a job.
    * @param id The id of the job.
    */
