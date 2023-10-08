@@ -1,11 +1,10 @@
+import {Arg} from '../arg.js';
+
 import {ActionInvocation} from './action_invocation.js';
 import {Program} from './program.js';
 
 export class ActionProgram extends Program {
-  constructor(public readonly action: string, public readonly args: {
-    name: string,
-    value: unknown
-  }[]) {
+  constructor(public readonly action: string, public readonly args: Arg[]) {
     super();
   }
 
