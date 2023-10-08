@@ -11,8 +11,8 @@ import {ParameterWithVariable} from './parameter_with_variable.js';
 
 export class ProgramActionInstance extends ActionInstance {
   private currentActionInstance?: ActionInstance = undefined;
-  private shouldPause: boolean = false;
-  private shouldRun: boolean = true;
+  private isCanceled: boolean = false;
+  private isPaused: boolean = false;
   private readonly variables: Record<string, unknown> = {};
 
   constructor(
@@ -66,7 +66,8 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot cancel an action instance in state ${this.wrappedState}`);
     }
 
-    this.shouldRun = false;
+    this.isCanceled = true;
+    await this.currentActionInstance?.cancel();
 
     // Wait till the current action instance becomes undefined.
     await (() => {
@@ -91,7 +92,7 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot pause an action instance in state ${this.wrappedState}`);
     }
 
-    this.shouldPause = true;
+    this.isPaused = true;
     await this.currentActionInstance?.pause();
 
     this.wrappedState = ActionInstanceState.PAUSED;
@@ -105,7 +106,7 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot resume an action instance in state ${this.wrappedState}`);
     }
 
-    this.shouldPause = false;
+    this.isPaused = false;
     await this.currentActionInstance?.resume();
 
     this.wrappedState = ActionInstanceState.RUNNING;
@@ -119,30 +120,7 @@ export class ProgramActionInstance extends ActionInstance {
           `cannot start an action instance in state ${this.wrappedState}`);
     }
 
-    this.evaluate().catch(async (error) => {
-      assert(error instanceof Error);
-
-      this.shouldRun = false;
-
-      try {
-        await this.currentActionInstance?.cancel();
-
-      } catch (error) {
-        assert(error instanceof Error);
-
-        consola.fatal(
-            `failed to cancel ${this.currentActionInstance?.actionName}#${
-                this.currentActionInstance?.id}: ${
-                error.message}. The program is malfunctioning`);
-
-        // Exit the process.
-        process.exit(1);
-      }
-
-      this.wrappedState = ActionInstanceState.FAILED;
-      this.eventEmitter.emit('fail', this, error.message);
-      consola.error(`${this.actionName}#${this.id} failed: ${error.message}`);
-    });
+    await this.startEvaluation();
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('start', this);
@@ -153,73 +131,103 @@ export class ProgramActionInstance extends ActionInstance {
   private async evaluate() {
     for (const actionInvocation of this.program) {
       // Check if the action instance has been canceled.
-      if (!this.shouldRun) {
+      if (this.isCanceled === true) {
         return;
       }
 
       // Check if the action instance has been paused.
-      if (this.shouldPause) {
-        // Wait till the action instance is resumed.
-        await (() => {
-          return new Promise<void>((resolve) => {
-            const interval = setInterval(() => {
-              if (!this.shouldPause) {
-                clearInterval(interval);
-                resolve();
-              }
-            }, 100);
-          });
-        })();
+      if (this.isPaused === true) {
+        await this.waitTillResume();
       }
 
       const action = this.bot.getAction(actionInvocation.action);
-      const args = actionInvocation.args.map((arg) => {
-        if (typeof arg.value === 'string' && arg.value.startsWith('$')) {
-          const value = this.variables[arg.value];
-          if (value === undefined) {
-            throw new Error(`variable ${arg.value} is undefined`);
-          }
-
-          return {
-            ...arg,
-            value,
-          };
-        }
-
-        return arg;
-      });
-
+      const args = this.replaceVariables(actionInvocation.args);
       const actionInstance = action.instantiate('', args, this.bot);
-
-      await actionInstance.start();
 
       if (this.currentActionInstance !== undefined) {
         // This should never happen.
         throw new Error(`trying to start ${action.name} while ${
             this.currentActionInstance.actionName} is running`);
       }
-
       this.currentActionInstance = actionInstance;
 
-      await (() => {
-        return new Promise<void>((resolve, reject) => {
-          actionInstance.eventEmitter.once('succeed', () => {
-            resolve();
-          });
-
-          actionInstance.eventEmitter.once('fail', (_, reason: string) => {
-            reject(new Error(`action ${action.name} failed: ${reason}`));
-          });
-        });
-      })();
+      await actionInstance.start();
+      await this.waitTillActionInstanceEnd(actionInstance);
 
       this.currentActionInstance = undefined;
     }
 
-    // Now, shouldRun must be true.
+    // Now, isCanceled is false.
 
     this.wrappedState = ActionInstanceState.SUCCEEDED;
     this.eventEmitter.emit('succeed', this);
     consola.log(`${this.actionName}#${this.id} succeeded`);
+  }
+
+  private async handleEvaluationError(error: Error) {
+    try {
+      await this.currentActionInstance?.cancel();
+
+    } catch (error) {
+      assert(error instanceof Error);
+
+      consola.fatal(
+          `failed to cancel ${this.currentActionInstance?.actionName}#${
+              this.currentActionInstance?.id}: ${
+              error.message}. The program is malfunctioning`);
+
+      // Exit the process.
+      process.exit(1);
+    }
+
+    this.wrappedState = ActionInstanceState.FAILED;
+    this.eventEmitter.emit('fail', this, error.message);
+    consola.error(`${this.actionName}#${this.id} failed: ${error.message}`);
+  }
+
+  private replaceVariables(args: ReadonlyArray<Arg>) {
+    return args.map((arg) => {
+      if (typeof arg.value === 'string' && arg.value.startsWith('$')) {
+        const value = this.variables[arg.value];
+        if (value === undefined) {
+          throw new Error(`variable ${arg.value} is undefined`);
+        }
+
+        return {
+          ...arg,
+          value,
+        };
+      }
+
+      return arg;
+    });
+  }
+
+  private async startEvaluation() {
+    this.evaluate().catch(this.handleEvaluationError.bind(this));
+  }
+
+  private async waitTillActionInstanceEnd(actionInstance: ActionInstance) {
+    return new Promise<void>((resolve, reject) => {
+      actionInstance.eventEmitter.once('succeed', () => {
+        resolve();
+      });
+
+      actionInstance.eventEmitter.once('fail', (_, reason: string) => {
+        reject(
+            new Error(`action ${actionInstance.actionName} failed: ${reason}`));
+      });
+    });
+  }
+
+  private async waitTillResume() {
+    return new Promise<void>((resolve) => {
+      const interval = setInterval(() => {
+        if (this.isPaused === false) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 10);
+    });
   }
 }
