@@ -8,6 +8,7 @@ import {nanoid} from 'nanoid';
 
 import {Action} from './actions/action.js';
 import {ActionInstance} from './actions/action_instance.js';
+import {ActionInstanceInfo} from './actions/action_instance_info.js';
 import {Arg} from './arg.js';
 
 export class Bot {
@@ -95,24 +96,24 @@ export class Bot {
   }
 
   /**
-   * Gets a job from the bot.
+   * Gets information of a job from the bot.
    * @param id The id of the job.
    * @returns The job.
    */
-  getJob(id: string): ActionInstance {
+  getJobInfo(id: string): ActionInstanceInfo {
     if (!(id in this.jobs)) {
       throw new Error(`job ${id} does not exist`);
     }
 
-    return this.jobs[id];
+    return this.jobs[id].info;
   }
 
   /**
-   * Get all jobs from the bot.
+   * Get information of all jobs from the bot.
    * @returns All jobs.
    */
-  getJobs(): ReadonlyArray<ActionInstance> {
-    return Object.values(this.jobs);
+  getJobsInfo(): ReadonlyArray<ActionInstanceInfo> {
+    return Object.values(this.jobs).map((job) => job.info);
   }
 
   private createMineflayerBot(
