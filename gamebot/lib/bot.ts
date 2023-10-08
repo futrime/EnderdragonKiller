@@ -40,10 +40,14 @@ export class Bot {
   }
 
   /**
-   * Adds or updates an action in the bot.
+   * Adds an action in the bot.
    * @param action The action to add or update.
    */
-  addOrUpdateAction(action: Action): void {
+  addAction(action: Action): void {
+    if (action.name in this.actions) {
+      throw new Error(`action ${action.name} already exists`);
+    }
+
     this.actions[action.name] = action;
   }
 
@@ -109,18 +113,6 @@ export class Bot {
    */
   getJobs(): ReadonlyArray<ActionInstance> {
     return Object.values(this.jobs);
-  }
-
-  /**
-   * Removes an action from the bot.
-   * @param action The action to remove.
-   */
-  removeAction(action: Action) {
-    if (!(action.name in this.actions)) {
-      throw new Error(`action ${action.name} does not exist`);
-    }
-
-    delete this.actions[action.name];
   }
 
   private createMineflayerBot(

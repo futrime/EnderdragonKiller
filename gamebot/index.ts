@@ -155,5 +155,5 @@ async function setupExpress(
 }
 
 function setupPredefinedActions(bot: Bot) {
-  bot.addOrUpdateAction(new GoToAction());
+  bot.addAction(new GoToAction());
 }
