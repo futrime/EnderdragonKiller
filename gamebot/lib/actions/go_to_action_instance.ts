@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {consola} from 'consola';
 import pathfinderModule from 'mineflayer-pathfinder';
 
@@ -145,8 +146,7 @@ export class GoToActionInstance extends PredefinedActionInstance {
               break;
 
             default:
-              // This should never happen.
-              return;
+              assert.fail('unreachable');
           }
 
           await this.stopPathfinding();

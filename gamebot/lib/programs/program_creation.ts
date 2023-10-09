@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import assert from 'assert';
 
 import {ActionProgram} from './action_program.js';
 import {LoopProgram} from './loop_program.js';
@@ -33,8 +34,7 @@ export function createProgram(json: unknown): Program {
       return createSequenceProgram(json);
 
     default:
-      // This should never happen.
-      throw new Error(`invalid program type ${data.type}`);
+      assert.fail(`unknown program type: ${data.type}`);
   }
 }
 
