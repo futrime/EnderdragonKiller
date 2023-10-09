@@ -1,28 +1,19 @@
-//@ts-check
-'use strict';
-
+import assert from 'assert';
 import consola from 'consola';
 import express from 'express';
-import {botToJson} from '../../lib/serialization.js';
 
 export const router = express.Router();
 
 router.route('/').get((req, res) => {
   try {
-    /**
-     * @type {import('../../lib/bot.js').Bot}
-     */
-    const bot = req.app.locals.bot;
-    const mineflayerBot = bot.getMineflayerBot();
-
     return res.status(200).send({
       apiVersion: '0.0.0',
-      data: {
-        bot: botToJson(mineflayerBot),
-      },
+      data: {},
     });
 
   } catch (error) {
+    assert(error instanceof Error);
+
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
       apiVersion: '0.0.0',

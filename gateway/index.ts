@@ -1,20 +1,25 @@
-//@ts-check
-'use strict';
+import 'dotenv/config';
 
 import {faker} from '@faker-js/faker';
 import consola from 'consola';
 import cors from 'cors';
-import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
 import process from 'process';
-import {router as routerApiBots} from './routes/bots/index.js';
 
-try {
+import {Bot} from './lib/bot.js';
+import {router as routerApiBots} from './routes/bots.js';
+
+main().catch((error) => {
+  consola.error(`process exited with error: ${error.message}`);
+  process.exit(1);
+});
+
+async function main() {
   // Read environment variables.
-  const listen_port = parseInt(process.env.LISTEN_PORT || '8080');
-  const log_level = parseInt(process.env.LOG_LEVEL || '3');
-  const faker_seed = parseInt(process.env.FAKER_SEED || '114514');
+  const listen_port = parseInt(process.env.LISTEN_PORT ?? '8080');
+  const log_level = parseInt(process.env.LOG_LEVEL ?? '3');
+  const faker_seed = parseInt(process.env.FAKER_SEED ?? '114514');
 
   // Set up logging.
   consola.level = log_level
@@ -23,26 +28,19 @@ try {
   faker.seed(faker_seed);
 
   // Set up shared data.
-  /**
-   * @type {import('./lib/bot').Bot[]}
-   */
-  const bots = [];
+  const bots: Bot[] = [];
 
   // Set up express.
   setupExpress(bots, listen_port);
-
-} catch (error) {
-  consola.error(`process exited with error: ${error.message}`);
-  process.exit(1);
 }
 
 /**
  * Sets up express.
- * @param {import('./lib/bot').Bot[]} bots The bots.
- * @param {number} listen_port The port of the gateway.
- * @returns {express.Express} The express app.
+ * @param bots The bots.
+ * @param listen_port The port of the gateway.
+ * @returns The express app.
  */
-function setupExpress(bots, listen_port) {
+function setupExpress(bots: Bot[], listen_port: number): express.Express {
   const app = express()
                   .use(morgan('tiny'))
                   .use(cors())
