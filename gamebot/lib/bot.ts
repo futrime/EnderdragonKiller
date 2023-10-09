@@ -97,9 +97,9 @@ export class Bot {
    * @param name The name of the action.
    * @returns The action.
    */
-  getAction(name: string): Action {
+  getAction(name: string): Action|undefined {
     if (!(name in this.actions)) {
-      throw new Error(`action ${name} does not exist`);
+      return undefined;
     }
 
     return this.actions[name];
@@ -118,9 +118,9 @@ export class Bot {
    * @param id The id of the job.
    * @returns The job.
    */
-  getJobInfo(id: string): ActionInstanceInfo {
+  getJobInfo(id: string): ActionInstanceInfo|undefined {
     if (!(id in this.jobs)) {
-      throw new Error(`job ${id} does not exist`);
+      return undefined;
     }
 
     return this.jobs[id].info;

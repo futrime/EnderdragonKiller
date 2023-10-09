@@ -10,27 +10,27 @@ const NAME = 'GoTo';
 
 const DESCRIPTION = 'Go to a specific location';
 
-const PARAMETERS: Record<string, Parameter> = {
-  'x': {
+const PARAMETERS: ReadonlyArray<Parameter> = [
+  {
     name: 'x',
     description: 'X coordinate',
     type: 'number',
   },
-  'y': {
+  {
     name: 'y',
     description: 'Y coordinate',
     type: 'number',
   },
-  'z': {
+  {
     name: 'z',
     description: 'Z coordinate',
     type: 'number',
   },
-};
+];
 
 export class GoToAction extends PredefinedAction {
   constructor() {
-    super(NAME, DESCRIPTION, Object.values(PARAMETERS));
+    super(NAME, DESCRIPTION, PARAMETERS);
   }
 
   override instantiate(id: string, args: ReadonlyArray<Arg>, bot: Bot):

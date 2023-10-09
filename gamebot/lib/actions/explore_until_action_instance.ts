@@ -3,44 +3,73 @@ import consola from 'consola';
 
 import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
-import {doArgArrayMatchParameterArray, isParameterArrayDuplicate} from '../parameter.js';
-import {ActionInvocation} from '../programs/action_invocation.js';
-import {Program} from '../programs/program.js';
+import {doArgArrayMatchParameterArray, Parameter} from '../parameter.js';
 
 import {ActionInstance} from './action_instance.js';
 import {ActionInstanceState} from './action_instance_state.js';
-import {ParameterWithVariable} from './parameter_with_variable.js';
+import {PredefinedActionInstance} from './predefined_action_instance.js';
 
-export class ProgramActionInstance extends ActionInstance {
-  private readonly variables: Record<string, unknown> = {};
+const ACTION_NAME = 'ExploreUntil';
+
+const DISTANCE_TRAVELED_PER_STEP = 32;
+
+const PARAMETERS: ReadonlyArray<Parameter> = [
+  {
+    name: 'x',
+    description: 'X coordinate of the direction vector',
+    type: 'number',
+  },
+  {
+    name: 'y',
+    description: 'Y coordinate of the direction vector',
+    type: 'number',
+  },
+  {
+    name: 'z',
+    description: 'Z coordinate of the direction vector',
+    type: 'number',
+  },
+  {
+    name: 'timeout',
+    description: 'Timeout in milliseconds',
+    type: 'number',
+  },
+];
+
+export class ExploreUntilActionInstance extends PredefinedActionInstance {
+  private readonly x: number;
+  private readonly y: number;
+  private readonly z: number;
+  private readonly timeout: number;
 
   private currentActionInstance?: ActionInstance = undefined;
   private shouldCancel: boolean = false;
   private shouldPause: boolean = false;
 
-  constructor(
-      id: string, args: ReadonlyArray<Arg>, bot: Bot, actionName: string,
-      parameters: ReadonlyArray<ParameterWithVariable>,
-      private readonly program: Program) {
-    super(id, actionName, args, bot);
+  constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
+    super(id, ACTION_NAME, args, bot);
 
-    if (isParameterArrayDuplicate(parameters) === false) {
-      throw new Error('parameters duplicate');
+    // Depends on GoToAction
+    if (bot.getAction('GoTo') === undefined) {
+      throw new Error('cannot find GoToAction');
     }
 
-    if (doArgArrayMatchParameterArray(args, parameters) === false) {
+    if (doArgArrayMatchParameterArray(args, Object.values(PARAMETERS)) ===
+        false) {
       throw new Error('args do not match parameters');
     }
 
-    // Set variables
-    for (const parameter of parameters) {
-      // Variable should start with $
-      if (!parameter.variable.startsWith('$')) {
-        throw new Error(`variable ${parameter.variable} should start with $`);
-      }
+    this.x = this.args['x'].value as number;
+    this.y = this.args['y'].value as number;
+    this.z = this.args['z'].value as number;
+    this.timeout = this.args['timeout'].value as number;
 
-      this.variables[parameter.variable] = this.args[parameter.name].value;
-    }
+    // Normalize direction vector
+    const length =
+        Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    this.x /= length;
+    this.y /= length;
+    this.z /= length;
   }
 
   override async cancel(): Promise<void> {
@@ -129,41 +158,26 @@ export class ProgramActionInstance extends ActionInstance {
     consola.log(`${this.actionName}#${this.id} started`);
   }
 
-  private createActionInstanceFromActionInvocation(
-      actionInvocation: ActionInvocation): ActionInstance {
-    const action = this.bot.getAction(actionInvocation.action);
-
-    if (action === undefined) {
-      throw new Error(`action ${actionInvocation.action} does not exist`);
-    }
-
-    const args = actionInvocation.args.map((arg) => {
-      if (typeof arg.value === 'string' && arg.value.startsWith('$')) {
-        const value = this.variables[arg.value];
-
-        return {
-          ...arg,
-          value,
-        };
-      }
-
-      return arg;
-    });
-
-    const actionInstance = action.instantiate('', args, this.bot);
-
-    return actionInstance;
-  }
-
   private async evaluate() {
-    for (const actionInvocation of this.program) {
-      const actionInstance =
-          this.createActionInstanceFromActionInvocation(actionInvocation);
+    const goToAction = this.bot.getAction('GoTo');
+    assert(goToAction !== undefined);
+
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < this.timeout) {
+      const goToActionInstance = goToAction.instantiate(
+          '',
+          [
+            {name: 'x', value: this.x * DISTANCE_TRAVELED_PER_STEP},
+            {name: 'y', value: this.y * DISTANCE_TRAVELED_PER_STEP},
+            {name: 'z', value: this.z * DISTANCE_TRAVELED_PER_STEP}
+          ],
+          this.bot);
 
       assert(this.currentActionInstance === undefined);
-      this.currentActionInstance = actionInstance;
+      this.currentActionInstance = goToActionInstance;
 
-      await actionInstance.start();
+      await goToActionInstance.start();
 
       // Should check whenever other coroutine may cancel this action instance.
       if (this.shouldCancel) {
@@ -174,7 +188,7 @@ export class ProgramActionInstance extends ActionInstance {
         await this.waitTillShouldPauseBecomesFalse();
       }
 
-      await this.waitTillActionInstanceEnd(actionInstance);
+      await this.waitTillActionInstanceEnd(goToActionInstance);
 
       // Should check whenever other coroutine may cancel this action instance.
       if (this.shouldCancel) {

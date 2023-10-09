@@ -36,8 +36,7 @@ export class GoToActionInstance extends PredefinedActionInstance {
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
 
-    if (doArgArrayMatchParameterArray(args, Object.values(PARAMETERS)) ===
-        false) {
+    if (doArgArrayMatchParameterArray(args, PARAMETERS) === false) {
       throw new Error('args do not match parameters');
     }
 
