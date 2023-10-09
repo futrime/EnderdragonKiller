@@ -79,6 +79,10 @@ export class GoToActionInstance extends PredefinedActionInstance {
           `cannot resume an action instance in state ${this.wrappedState}`);
     }
 
+    if (this.bot.isRunningAnyJob()) {
+      throw new Error('cannot resume a job because another job is running');
+    }
+
     await this.startPathfinding();
 
     this.wrappedState = ActionInstanceState.RUNNING;
@@ -90,6 +94,10 @@ export class GoToActionInstance extends PredefinedActionInstance {
     if (this.wrappedState !== ActionInstanceState.READY) {
       throw new Error(
           `cannot start an action instance in state ${this.wrappedState}`);
+    }
+
+    if (this.bot.isRunningAnyJob()) {
+      throw new Error('cannot start a job because another job is running');
     }
 
     await this.startPathfinding();
