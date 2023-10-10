@@ -10,8 +10,9 @@ import process from 'process';
 
 import {GoToAction} from './lib/actions/go_to_action.js';
 import {Bot} from './lib/bot.js';
-import {router as routerBotsObserve} from './routes/bots/observe.js';
-import {router as routerBotsStatus} from './routes/bots/status.js';
+import {router as routerBotsObserve} from './routes/bots/observe';
+import {router as routerBotsStatus} from './routes/bots/status';
+import {router as routerBotsAction} from './routes/bots/actions';
 
 main().catch((error) => {
   consola.error(`process exited with error: ${error.message}`);
@@ -135,6 +136,7 @@ async function setupExpress(
                   .use(express.raw({type: '*/*'}))
                   .use(`/api/bots/${bot.name}/observe`, routerBotsObserve)
                   .use(`/api/bots/${bot.name}/status`, routerBotsStatus)
+                  .use(`/api/bots/${bot.name}/action`, routerBotsAction)
                   .use((_, res) => {
                     return res.status(404).send({
                       apiVersion: '0.0.0',
