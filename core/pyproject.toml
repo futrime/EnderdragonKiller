@@ -1,13 +1,12 @@
 [tool.poetry]
-name = "knowledge-base"
+name = "edk-core"
 version = "0.0.0"
 description = ""
 authors = ["Zijian Zhang <futrime@outlook.com>"]
 readme = "README.md"
-packages = [{include = "knowledge_base"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 
 
 [build-system]
